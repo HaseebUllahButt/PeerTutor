@@ -1,0 +1,14 @@
+
+> peer-tutor@0.1.0 lint
+> eslint
+
+
+/home/haseeb/kaam/CS/SE/peer-tutor/src/lib/auth.ts
+  19:12  warning  '_err' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/haseeb/kaam/CS/SE/peer-tutor/src/lib/db.ts
+   9:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  12:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 3 problems (2 errors, 1 warning)
+

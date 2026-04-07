@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+
+  --color-ink: #0c0d0f;
+  --color-ink-80: #2a2b2e;
+  --color-ink-50: #848589;
+  --color-paper: #f6f1ea;
+  --color-paper-dark: #ede8e0;
+  --color-gold: #b5883a;
+  --color-gold-light: #ddb96a;
+  --color-gold-pale: #f4e9d3;
+  --color-emerald: #1a6b52;
+  --color-canvas: #ffffff;
+  --color-border: #ddd8d0;
+  --color-danger: #c0392b;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+
+  --animate-fade-up: fade-up 0.5s ease both;
+  --animate-fade-in: fade-in 0.4s ease both;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Typography utilities */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-sans);
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-paper);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+/* Input base */
+input, textarea, select {
+  font-family: var(--font-sans);
+}
