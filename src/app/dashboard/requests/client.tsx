@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import { JWTPayload } from '@/lib/auth';
+import CancellationModal from '@/components/CancellationModal';
 
 const navItems = [
   { label: 'Schedule',    href: '/dashboard',          icon: '' },
@@ -15,6 +16,9 @@ const navItems = [
 export default function RequestsClient({ user }: { user: JWTPayload }) {
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const fetchSessions = () => {
     fetch('/api/sessions')
@@ -33,10 +37,46 @@ export default function RequestsClient({ user }: { user: JWTPayload }) {
     fetchSessions();
   };
 
+  const handleCancelClick = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    setShowCancelModal(true);
+  };
+
+  const handleCancelConfirm = async (reason: string) => {
+    if (!selectedSessionId) return;
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/sessions/${selectedSessionId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
+      if (res.ok) {
+        setShowCancelModal(false);
+        setSelectedSessionId(null);
+        fetchSessions();
+      }
+    } catch (error) {
+      console.error('Cancellation error:', error);
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleCompleteClick = async (id: string) => {
+    await fetch(`/api/sessions/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'completed' }),
+    });
+    fetchSessions();
+  };
+
   const pending = sessions.filter(s => s.status === 'pending');
   const history = sessions.filter(s => s.status !== 'pending');
 
   return (
+    <>
     <DashboardShell user={user} navItems={navItems}>
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
@@ -70,6 +110,7 @@ export default function RequestsClient({ user }: { user: JWTPayload }) {
                   <div className="flex gap-2 flex-shrink-0">
                     <button onClick={() => handleAction(s._id, 'accepted')} className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90" style={{ backgroundColor: 'var(--color-emerald)', color: '#fff', fontFamily: 'var(--font-sans)' }}>Accept</button>
                     <button onClick={() => handleAction(s._id, 'declined')} className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-80 border" style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink-50)', fontFamily: 'var(--font-sans)' }}>Decline</button>
+                    <button onClick={() => handleCancelClick(s._id)} className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-80 border" style={{ borderColor: '#f0bcbc', backgroundColor: '#fef2f2', color: '#c0392b', fontFamily: 'var(--font-sans)' }}>Cancel</button>
                   </div>
                 </div>
               ))}
@@ -83,23 +124,56 @@ export default function RequestsClient({ user }: { user: JWTPayload }) {
             <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
               <h2 className="text-base font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}>History</h2>
             </div>
-            <div className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
-              {history.map(s => (
-                <div key={s._id} className="flex items-center gap-4 px-6 py-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-sans)' }}>{s.student?.name ?? 'Student'} — {s.subject}</p>
-                    <p className="text-xs" style={{ color: 'var(--color-ink-50)', fontFamily: 'var(--font-sans)' }}>{new Date(s.scheduledAt).toLocaleDateString()}</p>
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: s.status === 'accepted' ? '#edfaf3' : '#fef2f2', color: s.status === 'accepted' ? '#1a7a45' : '#c0392b' }}>
-                    {s.status}
-                  </span>
-                </div>
-              ))}
-            </div>
+              <div className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
+                {history.map(s => {
+                  const canCancel = s.status === 'accepted' && new Date(s.scheduledAt) > new Date();
+                  const canComplete = s.status === 'accepted' && new Date(s.scheduledAt) <= new Date();
+                  return (
+                    <div key={s._id} className="flex items-center gap-4 px-6 py-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-sans)' }}>{s.student?.name ?? 'Student'} — {s.subject}</p>
+                        <p className="text-xs" style={{ color: 'var(--color-ink-50)', fontFamily: 'var(--font-sans)' }}>{new Date(s.scheduledAt).toLocaleDateString()}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                          style={{ backgroundColor: s.status === 'accepted' ? '#edfaf3' : s.status === 'completed' ? '#f0f4ff' : '#fef2f2', color: s.status === 'accepted' ? '#1a7a45' : s.status === 'completed' ? '#3b5bdb' : '#c0392b' }}>
+                          {s.status}
+                        </span>
+                        {canComplete && (
+                          <button
+                            onClick={() => handleCompleteClick(s._id)}
+                            className="text-[10px] font-semibold px-2 py-0.5 rounded transition-all hover:opacity-90"
+                            style={{ backgroundColor: '#f0f4ff', color: '#3b5bdb', border: '1px solid #bcc4f5' }}
+                          >
+                            Mark Complete
+                          </button>
+                        )}
+                        {canCancel && (
+                          <button
+                            onClick={() => handleCancelClick(s._id)}
+                            className="text-[10px] font-semibold px-2 py-0.5 rounded transition-all hover:opacity-80"
+                            style={{ backgroundColor: '#fef2f2', color: '#c0392b', border: '1px solid #f0bcbc' }}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
           </div>
         )}
       </div>
     </DashboardShell>
+    {showCancelModal && (
+      <CancellationModal
+        isOpen={showCancelModal}
+        onClose={() => { setShowCancelModal(false); setSelectedSessionId(null); }}
+        onConfirm={handleCancelConfirm}
+        loading={cancelling}
+      />
+    )}
+    </>
   );
 }

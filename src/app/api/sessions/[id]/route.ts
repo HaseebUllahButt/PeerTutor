@@ -37,6 +37,9 @@ export async function PATCH(
     }
 
     session.status = status;
+    if (status === 'completed') {
+      session.completedAt = new Date();
+    }
     await session.save();
 
     return NextResponse.json({ message: 'Session updated successfully', session }, { status: 200 });

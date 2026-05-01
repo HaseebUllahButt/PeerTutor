@@ -50,6 +50,8 @@ export default function TutorDashboard({ user }: Props) {
 
   const pendingRequests = sessions.filter(s => s.status === 'pending');
   const upcomingSessions = sessions.filter(s => s.status === 'accepted');
+  const hoursCalculation = upcomingSessions.length * 1; // Placeholder - calculate from session duration
+  const rating = user.tutorProfile?.averageRating ?? 0;
 
   return (
     <DashboardShell user={user} navItems={navItems}>
@@ -77,8 +79,8 @@ export default function TutorDashboard({ user }: Props) {
           {[
             { label: 'Pending Requests', value: pendingRequests.length.toString() },
             { label: 'Upcoming Sessions', value: upcomingSessions.length.toString() },
-            { label: 'Hours Taught', value: '12' },
-            { label: 'Rating', value: '5.0★' },
+            { label: 'Hours Taught', value: hoursCalculation.toString() },
+            { label: 'Rating', value: rating > 0 ? `${rating}★` : 'No ratings yet' },
           ].map((stat) => (
             <div
               key={stat.label}

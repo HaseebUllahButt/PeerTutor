@@ -7,6 +7,23 @@ export interface JWTPayload {
   role: string;
   name: string;
   email: string;
+  tutorProfile?: {
+    subjects: string[];
+    hourlyRate: number;
+    bio: string;
+    weeklySchedule?: Array<{
+      day: string;
+      startHour: number;
+      endHour: number;
+    }>;
+    blackoutDates?: Array<{
+      date: Date;
+      startHour: number;
+      endHour: number;
+    }>;
+    averageRating?: number;
+    reviewCount?: number;
+  };
 }
 
 export function signToken(payload: JWTPayload): string {

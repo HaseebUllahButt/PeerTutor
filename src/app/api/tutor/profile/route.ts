@@ -9,7 +9,24 @@ const profileSchema = z.object({
   bio: z.string().optional(),
   hourlyRate: z.number().min(0).optional(),
   subjects: z.array(z.string()).optional(),
-  availability: z.array(z.string()).optional(),
+  schedule: z.object({
+    mode: z.enum(['simple', 'advanced']),
+    simpleSchedule: z.object({
+      startHour: z.number().min(0).max(23),
+      endHour: z.number().min(0).max(23),
+    }).optional(),
+    advancedSchedule: z.record(
+      z.string(),
+      z.object({
+        startHour: z.number().min(0).max(23),
+        endHour: z.number().min(0).max(23),
+      })
+    ).optional(),
+  }).optional(),
+  unavailableSlots: z.array(z.object({
+    date: z.string(),
+    hour: z.number().min(0).max(23),
+  })).optional(),
 });
 
 export async function PATCH(request: Request) {
@@ -35,13 +52,18 @@ export async function PATCH(request: Request) {
     }
 
     if (!user.tutorProfile) {
-      user.tutorProfile = { subjects: [], hourlyRate: 0, bio: '', availability: [] };
+      user.tutorProfile = { subjects: [], hourlyRate: 0, bio: '', schedule: { mode: 'simple' } };
     }
 
     if (parsed.bio !== undefined) user.tutorProfile.bio = parsed.bio;
     if (parsed.hourlyRate !== undefined) user.tutorProfile.hourlyRate = parsed.hourlyRate;
     if (parsed.subjects !== undefined) user.tutorProfile.subjects = parsed.subjects;
-    if (parsed.availability !== undefined) user.tutorProfile.availability = parsed.availability;
+    if (parsed.schedule !== undefined) {
+      user.tutorProfile.schedule = parsed.schedule;
+    }
+    if (parsed.unavailableSlots !== undefined) {
+      user.tutorProfile.unavailableSlots = parsed.unavailableSlots;
+    }
 
     await user.save();
 
@@ -51,7 +73,7 @@ export async function PATCH(request: Request) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const zodErr = error as any;
       return NextResponse.json(
-        { message: zodErr.issues?.[0]?.message || zodErr.errors?.[0]?.message || 'Invalid input' },
+        { message: zodErr.issues?.[0]?.message || 'Invalid input' },
         { status: 400 }
       );
     }

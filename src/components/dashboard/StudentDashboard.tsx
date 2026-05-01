@@ -57,11 +57,11 @@ export default function StudentDashboard({ user }: Props) {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            { label: 'Upcoming Sessions', value: upcomingSessions.length.toString() },
-            { label: 'Pending Requests', value: pendingSessions.length.toString() },
-            { label: 'Saved Tutors', value: '0' },
-          ].map((stat) => (
+           {[
+             { label: 'Upcoming Sessions', value: upcomingSessions.length.toString() },
+             { label: 'Pending Requests', value: pendingSessions.length.toString() },
+             { label: 'Total Sessions', value: sessions.length.toString() },
+           ].map((stat) => (
             <div
               key={stat.label}
               className="p-5 rounded-xl border shadow-sm"

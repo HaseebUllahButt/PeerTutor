@@ -5,8 +5,14 @@ export interface ISession extends Document {
   tutor: Types.ObjectId;
   subject: string;
   scheduledAt: Date;
-  status: 'pending' | 'accepted' | 'declined' | 'completed';
+  status: 'pending' | 'accepted' | 'declined' | 'completed' | 'cancelled';
   notes?: string;
+  rating?: number;
+  review?: string;
+  completedAt?: Date;
+  cancelledBy?: 'student' | 'tutor';
+  cancellationReason?: string;
+  cancelledAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,10 +25,16 @@ const sessionSchema = new Schema<ISession>(
     scheduledAt: { type: Date, required: true },
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'declined', 'completed'],
+      enum: ['pending', 'accepted', 'declined', 'completed', 'cancelled'],
       default: 'pending',
     },
     notes: { type: String },
+    rating: { type: Number, min: 1, max: 5 },
+    review: { type: String },
+    completedAt: { type: Date },
+    cancelledBy: { type: String, enum: ['student', 'tutor'] },
+    cancellationReason: { type: String },
+    cancelledAt: { type: Date },
   },
   { timestamps: true }
 );

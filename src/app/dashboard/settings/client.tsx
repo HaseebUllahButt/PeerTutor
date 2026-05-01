@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import { JWTPayload } from '@/lib/auth';
 
@@ -28,17 +29,35 @@ const navByRole: Record<string, { label: string; href: string; icon: string }[]>
 };
 
 export default function SettingsClient({ user }: { user: JWTPayload }) {
+  const router = useRouter();
   const navItems = navByRole[user.role] ?? navByRole.student;
   const [saved, setSaved] = useState(false);
   const [name, setName] = useState(user.name);
   const [email] = useState(user.email);
   const [notifSessions, setNotifSessions] = useState(true);
   const [notifMessages, setNotifMessages] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
+  }
+
+  async function handleDeleteAccount() {
+    setDeleteLoading(true);
+    try {
+      const res = await fetch('/api/auth/delete', { method: 'DELETE' });
+      if (res.ok) {
+        router.push('/');
+        router.refresh();
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+    } finally {
+      setDeleteLoading(false);
+    }
   }
 
   return (
@@ -109,7 +128,7 @@ export default function SettingsClient({ user }: { user: JWTPayload }) {
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
+           <div className="flex items-center gap-3">
             <button
               type="submit"
               className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
@@ -124,6 +143,56 @@ export default function SettingsClient({ user }: { user: JWTPayload }) {
             )}
           </div>
         </form>
+
+        {/* Danger Zone */}
+        <div className="rounded-xl border p-6 space-y-4" style={{ backgroundColor: 'var(--color-canvas)', borderColor: '#fee2e2' }}>
+          <h2 className="text-base font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-danger)' }}>Danger Zone</h2>
+          <p className="text-sm" style={{ color: 'var(--color-ink-50)', fontFamily: 'var(--font-sans)' }}>
+            Permanently delete your account and all associated data. This action cannot be undone.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
+            style={{ backgroundColor: 'var(--color-danger)', color: 'var(--color-canvas)', fontFamily: 'var(--font-sans)' }}
+          >
+            Delete Account
+          </button>
+        </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+            <div className="rounded-xl shadow-xl w-full max-w-md overflow-hidden" style={{ backgroundColor: 'var(--color-canvas)', animation: 'fade-up 0.3s ease both' }}>
+              <div className="p-6 border-b" style={{ borderColor: 'var(--color-border)' }}>
+                <h3 className="text-lg font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}>Delete Account?</h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <p style={{ fontFamily: 'var(--font-sans)', color: 'var(--color-ink-50)' }}>
+                  This will permanently delete your account and all associated data including sessions and messages. This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={deleteLoading}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold border transition-all"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink)', fontFamily: 'var(--font-sans)' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deleteLoading}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-60"
+                    style={{ backgroundColor: 'var(--color-danger)', color: 'var(--color-canvas)', fontFamily: 'var(--font-sans)' }}
+                  >
+                    {deleteLoading ? 'Deleting...' : 'Delete Permanently'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardShell>
   );
