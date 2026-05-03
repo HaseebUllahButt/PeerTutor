@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
 import Session from '@/models/Session';
 import User from '@/models/User';
-import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
+import { resolveAuthToken } from '@/lib/resolveAuthToken';
 import { z } from 'zod';
 
 const createSessionSchema = z.object({
@@ -15,10 +15,9 @@ const createSessionSchema = z.object({
   notes: z.string().optional(),
 });
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
+    const token = await resolveAuthToken(request);
 
     if (!token) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
@@ -46,8 +45,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
+    const token = await resolveAuthToken(request);
 
     if (!token) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
