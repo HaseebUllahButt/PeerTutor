@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import User from '@/models/User';
+import { resolveAuthToken } from '@/lib/resolveAuthToken';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
+    const token = await resolveAuthToken(request);
 
     if (!token) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
@@ -25,14 +24,21 @@ export async function GET() {
       return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
 
+    const tutorProfile = user.tutorProfile ?? payload.tutorProfile;
+
     return NextResponse.json({
+      userId: payload.userId,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      tutorProfile,
       user: {
         id: user._id.toString(),
         name: user.name,
         email: user.email,
         role: user.role,
         profilePicture: user.profilePicture,
-        tutorProfile: user.tutorProfile,
+        tutorProfile,
       },
     });
   } catch (error) {

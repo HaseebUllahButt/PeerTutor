@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { setTabAuthToken } from '@/lib/tabAuth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,6 +29,9 @@ export default function LoginPage() {
       if (!res.ok) {
         setError(data.message || 'Login failed. Please try again.');
       } else {
+        if (typeof data.token === 'string' && data.token.length > 0) {
+          setTabAuthToken(data.token);
+        }
         router.push('/dashboard');
         router.refresh();
       }

@@ -4,6 +4,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { setTabAuthToken } from '@/lib/tabAuth';
 
 type Role = 'student' | 'tutor';
 
@@ -94,6 +95,10 @@ function RegisterForm() {
           body: JSON.stringify({ email, password }),
         });
         if (loginRes.ok) {
+          const loginData = await loginRes.json().catch(() => ({}));
+          if (typeof loginData.token === 'string' && loginData.token.length > 0) {
+            setTabAuthToken(loginData.token);
+          }
           router.push('/dashboard');
           router.refresh();
         } else {
