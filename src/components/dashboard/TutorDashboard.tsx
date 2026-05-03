@@ -1,31 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardShell from './DashboardShell';
 import { JWTPayload } from '@/lib/auth';
+import { authenticatedFetch } from '@/lib/authenticatedFetch';
+import { ensureTabAuthTokenFromCookie, getTabAuthToken } from '@/lib/tabAuth';
 import { useRouter } from 'next/navigation';
+import { io } from 'socket.io-client';
 
 interface Props {
   user: JWTPayload;
 }
 
-const navItems = [
-  { label: 'Schedule', href: '/dashboard', icon: '📅' },
-  { label: 'My Students', href: '/dashboard/students', icon: '🎓' },
-  { label: 'Requests', href: '/dashboard/requests', icon: '📥' },
-  { label: 'Earnings', href: '/dashboard/earnings', icon: '💰' },
-  { label: 'Profile', href: '/dashboard/profile', icon: '👤' },
-];
-
 export default function TutorDashboard({ user }: Props) {
   const router = useRouter();
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const navItems = [
+    { label: 'Schedule', href: '/dashboard', icon: '📅' },
+    { label: 'My Students', href: '/dashboard/students', icon: '🎓' },
+    { label: 'Requests', href: '/dashboard/requests', icon: '📥' },
+    { label: 'Messages', href: '/dashboard/messages', icon: '💬', badge: unreadCount },
+    { label: 'Earnings', href: '/dashboard/earnings', icon: '💰' },
+    { label: 'Profile', href: '/dashboard/profile', icon: '👤' },
+  ];
 
   const fetchSessions = () => {
-    fetch('/api/sessions')
-      .then(res => res.json())
-      .then(data => {
+    authenticatedFetch('/api/sessions')
+      .then((res) => res.json())
+      .then((data) => {
         if (data.sessions) setSessions(data.sessions);
         setLoading(false);
       });
@@ -35,12 +40,61 @@ export default function TutorDashboard({ user }: Props) {
     fetchSessions();
   }, []);
 
+  const fetchUnreadCount = useCallback(() => {
+    authenticatedFetch('/api/conversations')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.conversations)) {
+          const count = data.conversations.reduce((acc: number, conv: { unreadCount?: number }) => {
+            return acc + (typeof conv.unreadCount === 'number' ? conv.unreadCount : 0);
+          }, 0);
+          setUnreadCount(count);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount]);
+
+  useEffect(() => {
+    let disposed = false;
+    let socket: ReturnType<typeof io> | null = null;
+
+    ensureTabAuthTokenFromCookie().then(() => {
+      if (disposed) return;
+      const token = getTabAuthToken();
+      if (!token) return;
+      socket = io(window.location.origin, {
+        path: '/api/socket',
+        auth: { token },
+        transports: ['websocket', 'polling'],
+        withCredentials: true,
+      });
+      if (disposed) {
+        socket.close();
+        socket = null;
+        return;
+      }
+      socket.on('new_message', fetchUnreadCount);
+      socket.on('peer_read_receipt', fetchUnreadCount);
+    });
+
+    return () => {
+      disposed = true;
+      socket?.close();
+    };
+  }, [fetchUnreadCount]);
+
   const handleUpdateStatus = async (id: string, status: 'accepted' | 'declined') => {
     try {
-      await fetch(`/api/sessions/${id}`, {
+      await authenticatedFetch(`/api/sessions/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status }),
       });
       fetchSessions();
     } catch(err) {

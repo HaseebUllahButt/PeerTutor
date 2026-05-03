@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { clearTabAuthToken } from '@/lib/tabAuth';
 
 interface NavItem {
   label: string;
   href: string;
   icon: string;
+  badge?: number;
 }
 
 interface DashboardShellProps {
@@ -110,6 +112,7 @@ export default function DashboardShell({ user, navItems, children }: DashboardSh
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   async function handleLogout() {
+    clearTabAuthToken();
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/');
     router.refresh();
@@ -185,6 +188,17 @@ export default function DashboardShell({ user, navItems, children }: DashboardSh
                   {Icon ?? <span className="text-base leading-none">{item.icon}</span>}
                 </span>
                 <span>{item.label}</span>
+                {item.badge && item.badge > 0 && (
+                  <span
+                    className="ml-auto min-w-5 h-5 px-1.5 rounded-full text-xs font-bold flex items-center justify-center"
+                    style={{
+                      backgroundColor: 'var(--color-gold)',
+                      color: 'var(--color-canvas)',
+                    }}
+                  >
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}

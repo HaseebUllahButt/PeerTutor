@@ -1,35 +1,88 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardShell from './DashboardShell';
 import { JWTPayload } from '@/lib/auth';
+import { authenticatedFetch } from '@/lib/authenticatedFetch';
+import { ensureTabAuthTokenFromCookie, getTabAuthToken } from '@/lib/tabAuth';
 import { useRouter } from 'next/navigation';
+import { io } from 'socket.io-client';
 
 interface Props {
   user: JWTPayload;
 }
 
-const navItems = [
-  { label: 'Overview', href: '/dashboard', icon: '⌂' },
-  { label: 'Search Tutors', href: '/dashboard/search', icon: '🔍' },
-  { label: 'My Sessions', href: '/dashboard/sessions', icon: '📅' },
-  { label: 'Messages', href: '/dashboard/messages', icon: '✉' },
-  { label: 'Settings', href: '/dashboard/settings', icon: '⚙' },
-];
-
 export default function StudentDashboard({ user }: Props) {
   const router = useRouter();
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const navItems = [
+    { label: 'Overview', href: '/dashboard', icon: '⌂' },
+    { label: 'Search Tutors', href: '/dashboard/search', icon: '🔍' },
+    { label: 'My Sessions', href: '/dashboard/sessions', icon: '📅' },
+    { label: 'Messages', href: '/dashboard/messages', icon: '💬', badge: unreadCount },
+    { label: 'Settings', href: '/dashboard/settings', icon: '⚙' },
+  ];
 
   useEffect(() => {
-    fetch('/api/sessions')
-      .then(res => res.json())
-      .then(data => {
+    authenticatedFetch('/api/sessions')
+      .then((res) => res.json())
+      .then((data) => {
         if (data.sessions) setSessions(data.sessions);
         setLoading(false);
       });
   }, []);
+
+  const fetchUnreadCount = useCallback(() => {
+    authenticatedFetch('/api/conversations')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.conversations)) {
+          const count = data.conversations.reduce((acc: number, conv: { unreadCount?: number }) => {
+            return acc + (typeof conv.unreadCount === 'number' ? conv.unreadCount : 0);
+          }, 0);
+          setUnreadCount(count);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount]);
+
+  useEffect(() => {
+    let disposed = false;
+    let socket: ReturnType<typeof io> | null = null;
+
+    ensureTabAuthTokenFromCookie().then(() => {
+      if (disposed) return;
+      const token = getTabAuthToken();
+      if (!token) return;
+      socket = io(window.location.origin, {
+        path: '/api/socket',
+        auth: { token },
+        transports: ['websocket', 'polling'],
+        withCredentials: true,
+      });
+      if (disposed) {
+        socket.close();
+        socket = null;
+        return;
+      }
+      socket.on('new_message', fetchUnreadCount);
+      socket.on('peer_read_receipt', fetchUnreadCount);
+    });
+
+    return () => {
+      disposed = true;
+      socket?.close();
+    };
+  }, [fetchUnreadCount]);
 
   const upcomingSessions = sessions.filter(s => s.status === 'accepted');
   const pendingSessions = sessions.filter(s => s.status === 'pending');
