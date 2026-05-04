@@ -13,6 +13,18 @@ export interface ISession extends Document {
   cancelledBy?: 'student' | 'tutor';
   cancellationReason?: string;
   cancelledAt?: Date;
+  // Payment fields
+  paymentStatus: 'unpaid' | 'pending' | 'paid' | 'failed' | 'refunded';
+  paymentId?: Types.ObjectId;
+  amount?: number;
+  duration?: number;
+  hourlyRate?: number;
+  paidAt?: Date;
+  transactionId?: string;
+  paymentMethod?: 'jazzcash' | 'easypaisa' | 'stripe' | 'bank_transfer';
+  // Tutor payment verification
+  tutorPaymentStatus?: 'pending' | 'verified' | 'disputed';
+  tutorVerifiedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +47,29 @@ const sessionSchema = new Schema<ISession>(
     cancelledBy: { type: String, enum: ['student', 'tutor'] },
     cancellationReason: { type: String },
     cancelledAt: { type: Date },
+    // Payment fields
+    paymentStatus: {
+      type: String,
+      enum: ['unpaid', 'pending', 'paid', 'failed', 'refunded'],
+      default: 'unpaid',
+    },
+    paymentId: { type: Schema.Types.ObjectId, ref: 'Payment' },
+    amount: { type: Number },
+    duration: { type: Number, default: 1.5 }, // hours
+    hourlyRate: { type: Number },
+    paidAt: { type: Date },
+    transactionId: { type: String },
+    paymentMethod: {
+      type: String,
+      enum: ['jazzcash', 'easypaisa', 'stripe', 'bank_transfer'],
+    },
+    // Tutor payment verification
+    tutorPaymentStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'disputed'],
+      default: 'pending',
+    },
+    tutorVerifiedAt: { type: Date },
   },
   { timestamps: true }
 );
