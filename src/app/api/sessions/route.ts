@@ -13,6 +13,7 @@ const createSessionSchema = z.object({
     message: 'Invalid date format',
   }),
   notes: z.string().optional(),
+  duration: z.number().min(0.5).max(8).default(1.5),
 });
 
 export async function GET(request: Request) {
@@ -64,12 +65,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Tutor not found' }, { status: 404 });
     }
 
+    // Calculate session amount based on tutor's hourly rate
+    const hourlyRate = tutor.tutorProfile?.hourlyRate || 500;
+    const duration = parsed.duration || 1.5;
+    const amount = Math.round(hourlyRate * duration);
+
     const session = await Session.create({
       student: user.userId,
       tutor: tutor._id,
       subject: parsed.subject,
       scheduledAt: new Date(parsed.scheduledAt),
       notes: parsed.notes,
+      duration,
+      hourlyRate,
+      amount,
+      paymentStatus: 'unpaid',
     });
 
     return NextResponse.json({ message: 'Session booked successfully', session }, { status: 201 });
