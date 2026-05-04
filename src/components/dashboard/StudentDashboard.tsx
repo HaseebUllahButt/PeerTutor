@@ -22,6 +22,7 @@ export default function StudentDashboard({ user }: Props) {
     { label: 'Overview', href: '/dashboard', icon: '⌂' },
     { label: 'Search Tutors', href: '/dashboard/search', icon: '🔍' },
     { label: 'My Sessions', href: '/dashboard/sessions', icon: '📅' },
+    { label: 'My Payments', href: '/dashboard/payments', icon: '💸' },
     { label: 'Messages', href: '/dashboard/messages', icon: '💬', badge: unreadCount },
     { label: 'Settings', href: '/dashboard/settings', icon: '⚙' },
   ];

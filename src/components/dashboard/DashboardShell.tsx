@@ -49,6 +49,13 @@ const Icons: Record<string, React.ReactElement> = {
       <path d="M5 10l1.5 1.5L11 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
+  'My Payments': (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="4.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+      <path d="M1.5 7.5H14.5" stroke="currentColor" strokeWidth="1.4"/>
+      <circle cx="4" cy="10.5" r="1" fill="currentColor"/>
+    </svg>
+  ),
   Messages: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
       <path d="M13.5 2.5H2.5C1.95 2.5 1.5 2.95 1.5 3.5V10.5C1.5 11.05 1.95 11.5 2.5 11.5H5.5L8 14.5L10.5 11.5H13.5C14.05 11.5 14.5 11.05 14.5 10.5V3.5C14.5 2.95 14.05 2.5 13.5 2.5Z" stroke="currentColor" strokeWidth="1.4"/>
