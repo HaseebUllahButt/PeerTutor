@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import DashboardShell from '@/components/dashboard/DashboardShell';
-import ConversationList from '@/components/messages/ConversationList';
-import ChatWindow from '@/components/messages/ChatWindow';
-import NewConversationModal from '@/components/messages/NewConversationModal';
+import DashboardShell from '@/features/dashboard/components/DashboardShell';
+import ConversationList from '@/features/messaging/components/ConversationList';
+import ChatWindow from '@/features/messaging/components/ChatWindow';
+import NewConversationModal from '@/features/messaging/components/NewConversationModal';
 import { JWTPayload } from '@/lib/auth';
 import { authenticatedFetch } from '@/lib/authenticatedFetch';
 import { ensureTabAuthTokenFromCookie, getTabAuthToken } from '@/lib/tabAuth';

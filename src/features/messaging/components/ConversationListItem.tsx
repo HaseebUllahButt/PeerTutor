@@ -1,6 +1,7 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
+import Image from 'next/image';
 
 interface Participant {
   userId: {
@@ -119,9 +120,11 @@ export default function ConversationListItem({
             }}
           >
             {otherParticipant?.userId.profilePicture ? (
-              <img
+              <Image
                 src={otherParticipant.userId.profilePicture}
                 alt={otherParticipant.userId.name}
+                width={48}
+                height={48}
                 className="w-full h-full rounded-full object-cover"
               />
             ) : (

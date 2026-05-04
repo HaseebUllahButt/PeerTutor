@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DashboardShell from '@/components/dashboard/DashboardShell';
+import DashboardShell from '@/features/dashboard/components/DashboardShell';
 import { JWTPayload } from '@/lib/auth';
-import InvoiceViewer from '@/components/payment/InvoiceViewer';
-import { FileText, Download, Eye, CheckCircle2, Clock, AlertCircle, Search, Filter, Calendar } from 'lucide-react';
+import InvoiceViewer from '@/features/payments/components/InvoiceViewer';
+import { FileText, Download, Eye, CheckCircle2, Clock, Search } from 'lucide-react';
 import { format } from 'date-fns';
 
 const navItems = [

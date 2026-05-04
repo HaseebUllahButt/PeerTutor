@@ -1,7 +1,0 @@
-src/app/api/auth/login/route.ts(59,24): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
-src/app/api/auth/register/route.ts(42,24): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
-src/app/api/auth/register/route.ts(42,75): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
-src/models/User.ts(38,44): error TS2349: This expression is not callable.
-  Type 'SaveOptions' has no call signatures.
-src/models/User.ts(40,3): error TS2349: This expression is not callable.
-  Type 'SaveOptions' has no call signatures.

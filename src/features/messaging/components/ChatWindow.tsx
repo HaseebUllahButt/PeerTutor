@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { ArrowLeft, MoreVertical, Phone, Video } from 'lucide-react';
+import Image from 'next/image';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 
@@ -126,9 +127,11 @@ export default function ChatWindow({
             }}
           >
             {otherParticipant?.userId.profilePicture ? (
-              <img
+              <Image
                 src={otherParticipant.userId.profilePicture}
                 alt={otherParticipant.userId.name}
+                width={40}
+                height={40}
                 className="w-full h-full rounded-full object-cover"
               />
             ) : (

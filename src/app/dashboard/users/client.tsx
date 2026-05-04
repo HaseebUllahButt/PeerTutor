@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DashboardShell from '@/components/dashboard/DashboardShell';
+import DashboardShell from '@/features/dashboard/components/DashboardShell';
 import { JWTPayload } from '@/lib/auth';
 
 const navItems = [
@@ -12,7 +12,13 @@ const navItems = [
 ];
 
 export default function UsersClient({ user }: { user: JWTPayload }) {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<Array<{
+    _id: string;
+    name?: string;
+    email?: string;
+    role?: string;
+    createdAt: string;
+  }>>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -58,7 +64,7 @@ export default function UsersClient({ user }: { user: JWTPayload }) {
             <div className="p-10 text-center text-sm" style={{ color: 'var(--color-ink-50)', fontFamily: 'var(--font-sans)' }}>No users found.</div>
           ) : (
             <div className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
-              {filtered.map((u: any) => (
+              {filtered.map((u) => (
                 <div key={u._id} className="grid grid-cols-3 px-6 py-3.5 items-center hover:bg-[var(--color-paper)] transition-colors">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ backgroundColor: 'var(--color-gold-pale)', color: 'var(--color-gold)' }}>

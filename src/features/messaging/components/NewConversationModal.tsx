@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Search, User, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface User {
   _id: string;
@@ -20,7 +21,6 @@ interface NewConversationModalProps {
   onClose: () => void;
   onCreate: (participantId: string, initialMessage: string) => void;
   currentUserRole: string;
-  currentUserId: string;
 }
 
 export default function NewConversationModal({
@@ -28,7 +28,6 @@ export default function NewConversationModal({
   onClose,
   onCreate,
   currentUserRole,
-  currentUserId,
 }: NewConversationModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<User[]>([]);
@@ -224,9 +223,11 @@ export default function NewConversationModal({
                         }}
                       >
                         {user.profilePicture ? (
-                          <img
+                          <Image
                             src={user.profilePicture}
                             alt={user.name}
+                            width={40}
+                            height={40}
                             className="w-full h-full rounded-full object-cover"
                           />
                         ) : (
@@ -272,9 +273,11 @@ export default function NewConversationModal({
                   }}
                 >
                   {selectedUser?.profilePicture ? (
-                    <img
+                    <Image
                       src={selectedUser.profilePicture}
                       alt={selectedUser.name}
+                      width={40}
+                      height={40}
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (

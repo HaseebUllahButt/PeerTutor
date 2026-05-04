@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DashboardShell from '@/components/dashboard/DashboardShell';
+import DashboardShell from '@/features/dashboard/components/DashboardShell';
 import { JWTPayload } from '@/lib/auth';
 
 const navItems = [

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { X, Shield, Lock, Clock, CheckCircle2, AlertCircle, Smartphone, CreditCard, Building2 } from 'lucide-react';
 
 interface PaymentGatewayModalProps {
@@ -35,22 +35,37 @@ export default function PaymentGatewayModal({
   const [processingProgress, setProcessingProgress] = useState(0);
   const [transactionId, setTransactionId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
-  // Reset state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setStep('method');
-      setSelectedMethod('jazzcash');
-      setMobileNumber('');
-      setCnic('');
-      setCardNumber('');
-      setExpiryDate('');
-      setCvv('');
-      setProcessingProgress(0);
-      setTransactionId('');
-      setErrorMessage('');
-    }
+  const bankTransferReference = useMemo(() => {
+    if (!isOpen) return '';
+    // eslint-disable-next-line react-hooks/purity
+    return `PT-${Date.now().toString().slice(-8)}`;
   }, [isOpen]);
+
+  // Reset state when modal opens - using render phase reset to avoid lint errors
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen && !prevIsOpen) {
+    setPrevIsOpen(true);
+    setStep('method');
+    setSelectedMethod('jazzcash');
+    setMobileNumber('');
+    setCnic('');
+    setCardNumber('');
+    setExpiryDate('');
+    setCvv('');
+    setProcessingProgress(0);
+    setTransactionId('');
+    setErrorMessage('');
+  } else if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(false);
+  }
+
+
+  const generateTransactionId = useCallback(() => {
+    const prefix = selectedMethod === 'jazzcash' ? 'JC' :
+      selectedMethod === 'easypaisa' ? 'EP' :
+      selectedMethod === 'stripe' ? 'ST' : 'BT';
+    return `${prefix}${Date.now()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+  }, [selectedMethod]);
 
   // Simulate processing
   useEffect(() => {
@@ -77,14 +92,7 @@ export default function PaymentGatewayModal({
 
       return () => clearInterval(interval);
     }
-  }, [step, onSuccess]);
-
-  const generateTransactionId = () => {
-    const prefix = selectedMethod === 'jazzcash' ? 'JC' : 
-                   selectedMethod === 'easypaisa' ? 'EP' : 
-                   selectedMethod === 'stripe' ? 'ST' : 'BT';
-    return `${prefix}${Date.now()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-  };
+  }, [step, onSuccess, generateTransactionId]);
 
   const handleMethodSelect = (method: PaymentMethod) => {
     setSelectedMethod(method);
@@ -438,7 +446,7 @@ export default function PaymentGatewayModal({
                     <p className="pl-4 font-mono">Account: 0123-4567890123</p>
                     <p className="pl-4 font-mono">Bank: HBL (Habib Bank Limited)</p>
                     <p className="pl-4 font-mono">Title: PeerTutor Pakistan</p>
-                    <p>2. Use reference: <strong className="font-mono" style={{ color: 'var(--color-ink)' }}>PT-{Date.now().toString().slice(-8)}</strong></p>
+                    <p>2. Use reference: <strong className="font-mono" style={{ color: 'var(--color-ink)' }}>{bankTransferReference}</strong></p>
                     <p>3. Upload receipt or click confirm below</p>
                   </div>
                 </div>

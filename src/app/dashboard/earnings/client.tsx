@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import DashboardShell from '@/components/dashboard/DashboardShell';
+import { useCallback, useState, useEffect } from 'react';
+import DashboardShell from '@/features/dashboard/components/DashboardShell';
 import { JWTPayload } from '@/lib/auth';
 import { 
   Wallet, 
@@ -9,16 +9,12 @@ import {
   Clock, 
   CheckCircle2, 
   ArrowUpRight,
-  ArrowDownRight,
-  Download,
   FileText,
-  Calendar,
   CreditCard,
   Building2,
-  Smartphone,
-  MoreHorizontal
+  Smartphone
 } from 'lucide-react';
-import { format, subMonths } from 'date-fns';
+import { format } from 'date-fns';
 
 const navItems = [
   { label: 'Schedule',    href: '/dashboard',          icon: '' },
@@ -71,11 +67,13 @@ interface WithdrawalData {
   }>;
 }
 
+type EarningsTabId = 'overview' | 'payments' | 'withdrawals';
+
 export default function EarningsClient({ user }: { user: JWTPayload }) {
   const [earningsData, setEarningsData] = useState<EarningsData | null>(null);
   const [withdrawalData, setWithdrawalData] = useState<WithdrawalData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'payments' | 'withdrawals'>('overview');
+  const [activeTab, setActiveTab] = useState<EarningsTabId>('overview');
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
   useEffect(() => {
@@ -273,14 +271,14 @@ export default function EarningsClient({ user }: { user: JWTPayload }) {
 
         {/* Tabs */}
         <div className="flex gap-1 p-1 rounded-xl" style={{ backgroundColor: 'var(--color-paper)' }}>
-          {[
+          {([
             { id: 'overview', label: 'Overview', count: null },
             { id: 'payments', label: 'Payment History', count: summary?.completedPayments },
             { id: 'withdrawals', label: 'Withdrawals', count: withdrawalData?.recentWithdrawals.length },
-          ].map((tab) => (
+          ] as const).map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id)}
               className="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2"
               style={{
                 backgroundColor: activeTab === tab.id ? 'var(--color-canvas)' : 'transparent',
@@ -524,23 +522,38 @@ function OverviewTab({
 }
 
 // Payments Tab
+interface PaymentsTabItem {
+  id: string;
+  sessionId?: string;
+  sessionSubject: string;
+  sessionDate: string;
+  duration: number;
+  studentName: string;
+  amount: number;
+  tutorEarnings: number;
+  status: string;
+}
+
 function PaymentsTab({ loading }: { loading: boolean }) {
-  const [payments, setPayments] = useState<any[]>([]);
+  const [payments, setPayments] = useState<PaymentsTabItem[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
 
-  useEffect(() => {
-    fetchPayments();
-  }, [statusFilter]);
-
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     try {
       const res = await fetch(`/api/tutor/payments?status=${statusFilter}`);
       const data = await res.json();
-      setPayments(data.payments || []);
+      setPayments(Array.isArray(data.payments) ? data.payments : []);
     } catch (error) {
       console.error('Error fetching payments:', error);
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      await fetchPayments();
+    };
+    loadData();
+  }, [fetchPayments]);
 
   return (
     <div 
@@ -778,9 +791,8 @@ function WithdrawModal({
         const error = await res.json();
         alert(error.message || 'Failed to submit withdrawal');
       }
-    } catch (error) {
+    } catch {
       alert('Network error');
-    } finally {
       setSubmitting(false);
     }
   };
@@ -829,15 +841,15 @@ function WithdrawModal({
               Payment Method
             </label>
             <div className="grid grid-cols-3 gap-2">
-              {[
+              {([
                 { id: 'jazzcash', label: 'JazzCash', color: '#c8102e' },
                 { id: 'easypaisa', label: 'Easypaisa', color: '#00a651' },
                 { id: 'bank_transfer', label: 'Bank', color: 'var(--color-ink)' },
-              ].map((method) => (
+              ] as const).map((method) => (
                 <button
                   key={method.id}
                   type="button"
-                  onClick={() => setPaymentMethod(method.id as any)}
+                  onClick={() => setPaymentMethod(method.id)}
                   className="py-3 px-2 rounded-xl text-xs font-medium transition-all border"
                   style={{
                     backgroundColor: paymentMethod === method.id ? `${method.color}15` : 'var(--color-paper)',

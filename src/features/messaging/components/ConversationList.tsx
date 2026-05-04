@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { Search, Plus } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import ConversationListItem from './ConversationListItem';
 
 interface Participant {
@@ -60,15 +59,13 @@ export default function ConversationList({
   onCreateConversation,
 }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredConversations, setFilteredConversations] = useState<Conversation[]>(conversations);
 
-  useEffect(() => {
+  const filteredConversations = useMemo(() => {
     if (!searchQuery.trim()) {
-      setFilteredConversations(conversations);
-      return;
+      return conversations;
     }
 
-    const filtered = conversations.filter((conv) => {
+    return conversations.filter((conv) => {
       const otherParticipant = conv.participants.find(
         (p) => p.userId._id !== currentUserId
       );
@@ -82,8 +79,6 @@ export default function ConversationList({
         lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
       );
     });
-
-    setFilteredConversations(filtered);
   }, [searchQuery, conversations, currentUserId]);
 
   return (

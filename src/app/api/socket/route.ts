@@ -1,8 +1,3 @@
-import { NextResponse } from 'next/server';
+import { getSocketStatus } from '@/features/socket/server/socketHandlers';
 
-export async function GET() {
-  return NextResponse.json({
-    success: true,
-    message: 'Socket.io server endpoint. Connect via WebSocket client.'
-  });
-}
+export const GET = getSocketStatus;

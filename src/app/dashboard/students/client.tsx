@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DashboardShell from '@/components/dashboard/DashboardShell';
+import DashboardShell from '@/features/dashboard/components/DashboardShell';
 import { JWTPayload } from '@/lib/auth';
 
 const navItems = [
@@ -13,7 +13,11 @@ const navItems = [
 ];
 
 export default function StudentsClient({ user }: { user: JWTPayload }) {
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<Array<{
+    status: string;
+    scheduledAt: string;
+    student?: { _id?: string; name?: string } | string;
+  }>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,12 +29,15 @@ export default function StudentsClient({ user }: { user: JWTPayload }) {
   // Deduplicate students from accepted sessions
   const studentMap = new Map<string, { name: string; sessionsCount: number; lastSession: string }>();
   sessions.filter(s => s.status === 'accepted').forEach(s => {
-    const id = s.student?._id ?? s.student;
+    const student = s.student;
+    const id = typeof student === 'object' ? student?._id : student;
+    const name = typeof student === 'object' ? student?.name : 'Student';
+    
     if (!id) return;
     if (studentMap.has(id)) {
       studentMap.get(id)!.sessionsCount++;
     } else {
-      studentMap.set(id, { name: s.student?.name ?? 'Student', sessionsCount: 1, lastSession: s.scheduledAt });
+      studentMap.set(id, { name: name ?? 'Student', sessionsCount: 1, lastSession: s.scheduledAt });
     }
   });
   const students = Array.from(studentMap.entries());

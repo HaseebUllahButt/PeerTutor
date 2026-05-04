@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DashboardShell from '@/components/dashboard/DashboardShell';
+import DashboardShell from '@/features/dashboard/components/DashboardShell';
 import { JWTPayload } from '@/lib/auth';
-import CancellationModal from '@/components/CancellationModal';
+import CancellationModal from '@/features/sessions/components/CancellationModal';
 
 const navItems = [
   { label: 'Schedule',    href: '/dashboard',          icon: '' },
@@ -14,7 +14,13 @@ const navItems = [
 ];
 
 export default function RequestsClient({ user }: { user: JWTPayload }) {
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<Array<{
+    _id: string;
+    status: string;
+    subject: string;
+    scheduledAt: string;
+    student?: { _id?: string; name?: string };
+  }>>([]);
   const [loading, setLoading] = useState(true);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);

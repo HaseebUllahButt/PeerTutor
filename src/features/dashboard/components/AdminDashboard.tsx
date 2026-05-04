@@ -15,9 +15,16 @@ const navItems = [
   { label: 'Platform Settings', href: '/dashboard/settings', icon: '⚙' },
 ];
 
+interface RecentSignup {
+  _id: string;
+  name: string;
+  role: string;
+  createdAt: string;
+}
+
 export default function AdminDashboard({ user }: Props) {
   const [stats, setStats] = useState({ totalUsers: 0, activeTutors: 0, totalSessions: 0, openReports: 0 });
-  const [recentSignups, setRecentSignups] = useState<any[]>([]);
+  const [recentSignups, setRecentSignups] = useState<RecentSignup[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DashboardShell from '@/components/dashboard/DashboardShell';
+import DashboardShell from '@/features/dashboard/components/DashboardShell';
 import { JWTPayload } from '@/lib/auth';
-import CancellationModal from '@/components/CancellationModal';
-import RatingModal from '@/components/RatingModal';
-import PaymentGatewayModal from '@/components/payment/PaymentGatewayModal';
-import { CheckCircle2, Clock, AlertCircle, CreditCard, DollarSign, Shield, ShieldCheck } from 'lucide-react';
+import CancellationModal from '@/features/sessions/components/CancellationModal';
+import RatingModal from '@/features/sessions/components/RatingModal';
+import PaymentGatewayModal from '@/features/payments/components/PaymentGatewayModal';
+import { CheckCircle2, Clock, AlertCircle, CreditCard, DollarSign, Shield, ShieldCheck, type LucideIcon } from 'lucide-react';
 
 const navItems = [
   { label: 'Overview', href: '/dashboard', icon: '⌂' },
@@ -25,7 +25,7 @@ const statusColors: Record<string, { bg: string; text: string }> = {
   cancelled: { bg: '#fef2f2', text: '#c0392b' },
 };
 
-const paymentStatusColors: Record<string, { bg: string; color: string; icon: any; label: string }> = {
+const paymentStatusColors: Record<string, { bg: string; color: string; icon: LucideIcon; label: string }> = {
   unpaid:    { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b', icon: Clock, label: 'Unpaid' },
   pending:   { bg: 'rgba(99,102,241,0.1)', color: '#6366f1', icon: Clock, label: 'Pending' },
   paid:      { bg: 'rgba(52,168,83,0.1)', color: '#34a853', icon: CheckCircle2, label: 'Paid' },
@@ -33,8 +33,29 @@ const paymentStatusColors: Record<string, { bg: string; color: string; icon: any
   refunded:  { bg: 'rgba(107,114,128,0.1)', color: '#6b7280', icon: DollarSign, label: 'Refunded' },
 };
 
+interface SessionParticipant {
+  _id?: string;
+  name?: string;
+  email?: string;
+}
+
+interface SessionItem {
+  _id: string;
+  status: string;
+  scheduledAt: string;
+  subject: string;
+  student?: SessionParticipant;
+  tutor?: SessionParticipant;
+  amount?: number;
+  duration?: number;
+  hourlyRate?: number;
+  rating?: number;
+  paymentStatus?: string;
+  tutorPaymentStatus?: string;
+}
+
 export default function SessionsPageClient({ user }: { user: JWTPayload }) {
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'declined'>('all');
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -45,7 +66,7 @@ export default function SessionsPageClient({ user }: { user: JWTPayload }) {
   
   // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [selectedSession, setSelectedSession] = useState<SessionItem | null>(null);
   
   // Verification state
   const [verifying, setVerifying] = useState<string | null>(null);
@@ -114,7 +135,7 @@ export default function SessionsPageClient({ user }: { user: JWTPayload }) {
 
   const filtered = filter === 'all' ? sessions : sessions.filter(s => s.status === filter);
 
-  const handlePayNow = (session: any) => {
+  const handlePayNow = (session: SessionItem) => {
     setSelectedSession(session);
     setShowPaymentModal(true);
   };

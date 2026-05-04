@@ -8,17 +8,13 @@ import mongoose from 'mongoose';
 import Payment from '../src/models/Payment';
 import Withdrawal from '../src/models/Withdrawal';
 import Invoice from '../src/models/Invoice';
-import Session from '../src/models/Session';
 import User from '../src/models/User';
-import { subMonths, subDays, format } from 'date-fns';
+import { subDays, format } from 'date-fns';
 
 // MongoDB connection string - update as needed
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/peertutor';
 
-// Mock data configuration
-const TUTOR_ID = 'your-tutor-id-here'; // Update with actual tutor ID
-const STUDENT_IDS = ['student-1', 'student-2', 'student-3'];
-const SESSION_IDS = ['session-1', 'session-2', 'session-3', 'session-4', 'session-5'];
+// Mock data configuration (Unused placeholders removed)
 
 // Helper to generate random amounts based on hourly rate
 const generateSessionAmount = (hourlyRate: number, duration: number = 1.5) => {
@@ -115,6 +111,7 @@ const createMockWithdrawals = async (tutorId: string) => {
 };
 
 // Create mock invoices
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createMockInvoices = async (payments: any[]) => {
   console.log('Creating mock invoices...');
   

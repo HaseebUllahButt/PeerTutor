@@ -72,7 +72,7 @@ export function generateAvailableSlots(
 export function isSlotBooked(
   slotDate: string,
   slotHour: number,
-  bookedSessions: any[]
+  bookedSessions: Array<{ scheduledAt: string | Date }>
 ): boolean {
   return bookedSessions.some(session => {
     const sessionDate = new Date(session.scheduledAt);

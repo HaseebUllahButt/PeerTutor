@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DashboardShell from '@/components/dashboard/DashboardShell';
+import DashboardShell from '@/features/dashboard/components/DashboardShell';
 
 interface UnavailableSlot {
   date: string;
@@ -11,7 +11,26 @@ interface UnavailableSlot {
 export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<null | {
+    name: string;
+    email: string;
+    role: string;
+    tutorProfile?: {
+      bio?: string;
+      hourlyRate?: number;
+      subjects?: string[];
+      schedule?: {
+        mode?: 'simple' | 'advanced';
+        simpleSchedule?: { startHour?: number; endHour?: number };
+        advancedSchedule?: Record<string, { startHour: number; endHour: number }>;
+      };
+      averageRating?: number;
+      reviewCount?: number;
+      cancellationRate?: number;
+      cancellationCount?: number;
+      unavailableSlots?: UnavailableSlot[];
+    };
+  }>(null);
   const [message, setMessage] = useState('');
   
   const [bio, setBio] = useState('');
@@ -70,7 +89,17 @@ export default function ProfilePage() {
 
     const subjects = subjectsStr.split(',').map(s => s.trim()).filter(Boolean);
 
-    const payload: any = {
+    const payload: {
+      bio: string;
+      hourlyRate: number;
+      subjects: string[];
+      schedule: {
+        mode: 'simple' | 'advanced';
+        simpleSchedule?: { startHour: number; endHour: number };
+        advancedSchedule?: Record<string, { startHour: number; endHour: number }>;
+      };
+      unavailableSlots: UnavailableSlot[];
+    } = {
       bio,
       hourlyRate: Number(hourlyRate),
       subjects,
@@ -101,7 +130,7 @@ export default function ProfilePage() {
       } else {
         setMessage(data.message || 'Error occurred');
       }
-    } catch (err) {
+    } catch {
       setMessage('Internal Server Error');
     }
     setLoading(false);
@@ -388,7 +417,7 @@ export default function ProfilePage() {
                     Block Hours
                   </h2>
                   <p className="text-sm" style={{ color: 'var(--color-ink-50)', fontFamily: 'var(--font-sans)' }}>
-                    Block specific hours when you're not available
+                    Block specific hours when you&apos;re not available
                   </p>
 
                   <div className="space-y-2">

@@ -12,32 +12,28 @@ interface Props {
   user: JWTPayload;
 }
 
-export default function TutorDashboard({ user }: Props) {
+export default function StudentDashboard({ user }: Props) {
   const router = useRouter();
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<Array<{ _id: string; status: string; subject: string; scheduledAt: string; tutor?: { name?: string } }>>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const navItems = [
-    { label: 'Schedule', href: '/dashboard', icon: '📅' },
-    { label: 'My Students', href: '/dashboard/students', icon: '🎓' },
-    { label: 'Requests', href: '/dashboard/requests', icon: '📥' },
+    { label: 'Overview', href: '/dashboard', icon: '⌂' },
+    { label: 'Search Tutors', href: '/dashboard/search', icon: '🔍' },
+    { label: 'My Sessions', href: '/dashboard/sessions', icon: '📅' },
+    { label: 'My Payments', href: '/dashboard/payments', icon: '💸' },
     { label: 'Messages', href: '/dashboard/messages', icon: '💬', badge: unreadCount },
-    { label: 'Earnings', href: '/dashboard/earnings', icon: '💰' },
-    { label: 'Profile', href: '/dashboard/profile', icon: '👤' },
+    { label: 'Settings', href: '/dashboard/settings', icon: '⚙' },
   ];
 
-  const fetchSessions = () => {
+  useEffect(() => {
     authenticatedFetch('/api/sessions')
       .then((res) => res.json())
       .then((data) => {
         if (data.sessions) setSessions(data.sessions);
         setLoading(false);
       });
-  };
-
-  useEffect(() => {
-    fetchSessions();
   }, []);
 
   const fetchUnreadCount = useCallback(() => {
@@ -89,23 +85,8 @@ export default function TutorDashboard({ user }: Props) {
     };
   }, [fetchUnreadCount]);
 
-  const handleUpdateStatus = async (id: string, status: 'accepted' | 'declined') => {
-    try {
-      await authenticatedFetch(`/api/sessions/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      });
-      fetchSessions();
-    } catch(err) {
-      console.error(err);
-    }
-  };
-
-  const pendingRequests = sessions.filter(s => s.status === 'pending');
   const upcomingSessions = sessions.filter(s => s.status === 'accepted');
-  const hoursCalculation = upcomingSessions.length * 1; // Placeholder - calculate from session duration
-  const rating = user.tutorProfile?.averageRating ?? 0;
+  const pendingSessions = sessions.filter(s => s.status === 'pending');
 
   return (
     <DashboardShell user={user} navItems={navItems}>
@@ -113,29 +94,28 @@ export default function TutorDashboard({ user }: Props) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}>
-              Tutor Dashboard
+              Dashboard
             </h1>
             <p className="text-sm mt-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--color-ink-50)' }}>
-              Manage your sessions and students, {user.name}.
+              Welcome back to your educational journey, {user.name}.
             </p>
           </div>
           <button
-            onClick={() => router.push('/dashboard/profile')}
+            onClick={() => router.push('/dashboard/search')}
             className="px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 whitespace-nowrap w-max"
-            style={{ backgroundColor: 'var(--color-emerald)', color: 'var(--color-canvas)', fontFamily: 'var(--font-sans)' }}
+            style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-canvas)', fontFamily: 'var(--font-sans)' }}
           >
-            Update Availability Profile
+            Find a Tutor
           </button>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          {[
-            { label: 'Pending Requests', value: pendingRequests.length.toString() },
-            { label: 'Upcoming Sessions', value: upcomingSessions.length.toString() },
-            { label: 'Hours Taught', value: hoursCalculation.toString() },
-            { label: 'Rating', value: rating > 0 ? `${rating}★` : 'No ratings yet' },
-          ].map((stat) => (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+           {[
+             { label: 'Upcoming Sessions', value: upcomingSessions.length.toString() },
+             { label: 'Pending Requests', value: pendingSessions.length.toString() },
+             { label: 'Total Sessions', value: sessions.length.toString() },
+           ].map((stat) => (
             <div
               key={stat.label}
               className="p-5 rounded-xl border shadow-sm"
@@ -151,27 +131,29 @@ export default function TutorDashboard({ user }: Props) {
           ))}
         </div>
 
-        {/* Action Box */}
+        {/* Upcoming Box */}
         <div className="rounded-xl border shadow-sm p-6" style={{ backgroundColor: 'var(--color-canvas)', borderColor: 'var(--color-border)' }}>
           <h2 className="text-xl font-bold mb-4" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}>
-            Recent Requests
+            Your Sessions
           </h2>
-          {loading ? <p className="text-sm">Loading requests...</p> : pendingRequests.length === 0 ? (
-            <p className="text-sm text-gray-500">You have no pending requests.</p>
+          {loading ? <p className="text-sm">Loading sessions...</p> : sessions.length === 0 ? (
+            <p className="text-sm text-gray-500">You have no active sessions. Book one to get started!</p>
           ) : (
             <div className="space-y-4">
-              {pendingRequests.map(session => (
-                <div key={session._id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-lg border" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-paper)' }}>
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--color-ink-50)', color: 'var(--color-canvas)' }}>
-                    <span className="font-bold text-sm">{session.student?.name.substring(0,2).toUpperCase() || 'ST'}</span>
+              {sessions.map(session => (
+                <div key={session._id} className="flex items-center gap-4 p-4 rounded-lg border" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-paper)' }}>
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--color-gold-pale)', color: 'var(--color-gold)' }}>
+                    <span className="font-bold text-lg">{session.tutor?.name?.substring(0, 2).toUpperCase() || 'TU'}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-base truncate" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-sans)' }}>{session.student?.name}</p>
-                    <p className="text-sm truncate" style={{ color: 'var(--color-ink-50)', fontFamily: 'var(--font-sans)' }}>Requested: {session.subject} on {new Date(session.scheduledAt).toLocaleString()}</p>
+                    <p className="font-semibold text-base truncate" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-sans)' }}>{session.subject}</p>
+                    <p className="text-sm truncate" style={{ color: 'var(--color-ink-50)', fontFamily: 'var(--font-sans)' }}>with {session.tutor?.name || 'Tutor'}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => handleUpdateStatus(session._id, 'accepted')} className="text-xs px-4 py-2 hover:-translate-y-0.5 transition-transform rounded-md font-semibold" style={{ backgroundColor: 'var(--color-emerald)', color: 'var(--color-canvas)' }}>Accept</button>
-                    <button onClick={() => handleUpdateStatus(session._id, 'declined')} className="text-xs px-4 py-2 hover:-translate-y-0.5 transition-transform rounded-md font-semibold border" style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink-80)' }}>Decline</button>
+                  <div className="text-right">
+                    <p className="font-semibold text-sm" style={{ color: session.status === 'accepted' ? 'var(--color-emerald)' : 'var(--color-ink)', fontFamily: 'var(--font-sans)' }}>
+                      {new Date(session.scheduledAt).toLocaleDateString()}
+                    </p>
+                    <p className="text-xs uppercase tracking-widest font-semibold mt-1" style={{ color: session.status === 'pending' ? 'orange' : session.status === 'declined' ? 'red' : 'green', fontFamily: 'var(--font-sans)' }}>{session.status}</p>
                   </div>
                 </div>
               ))}

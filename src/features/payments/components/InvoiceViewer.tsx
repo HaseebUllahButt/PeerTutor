@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { X, Download, Printer, CheckCircle2, FileText, Calendar, User, DollarSign, Building2 } from 'lucide-react';
+import { useRef } from 'react';
+import { X, Download, Printer, CheckCircle2, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Invoice {
@@ -32,15 +32,12 @@ interface InvoiceViewerProps {
 
 export default function InvoiceViewer({ invoice, isOpen, onClose, userRole }: InvoiceViewerProps) {
   const invoiceRef = useRef<HTMLDivElement>(null);
-  const [isPrinting, setIsPrinting] = useState(false);
 
   if (!isOpen || !invoice) return null;
 
   const handlePrint = () => {
-    setIsPrinting(true);
     setTimeout(() => {
       window.print();
-      setIsPrinting(false);
     }, 100);
   };
 
@@ -141,7 +138,7 @@ export default function InvoiceViewer({ invoice, isOpen, onClose, userRole }: In
                   </span>
                 </div>
                 <p className="text-sm" style={{ color: 'var(--color-ink-50)', fontFamily: 'var(--font-sans)' }}>
-                  Pakistan's Premier Tutoring Platform
+                  Pakistan&apos;s Premier Tutoring Platform
                 </p>
                 <p className="text-xs mt-1" style={{ color: 'var(--color-ink-50)', fontFamily: 'var(--font-sans)' }}>
                   support@peertutor.pk • www.peertutor.pk

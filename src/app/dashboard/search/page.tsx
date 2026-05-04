@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DashboardShell from '@/components/dashboard/DashboardShell';
-import BookingCalendar from '@/components/BookingCalendar';
+import DashboardShell from '@/features/dashboard/components/DashboardShell';
+import BookingCalendar from '@/features/sessions/components/BookingCalendar';
 
 interface TutorProfile {
   subjects?: string[];
@@ -160,7 +160,7 @@ export default function SearchPage() {
       } else {
         setMessage(data.message || 'Error occurred');
       }
-    } catch(err) {
+    } catch {
       setMessage('Internal Server Error');
     }
     setBookingLoading(false);

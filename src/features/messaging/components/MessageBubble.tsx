@@ -2,6 +2,7 @@
 
 import { Check, CheckCheck } from 'lucide-react';
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 interface MessageSender {
   _id: string;
@@ -71,9 +72,11 @@ export default function MessageBubble({
               }}
             >
               {message.senderId.profilePicture ? (
-                <img
+                <Image
                   src={message.senderId.profilePicture}
                   alt={message.senderId.name}
+                  width={32}
+                  height={32}
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (

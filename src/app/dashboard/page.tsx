@@ -1,9 +1,9 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyToken } from '@/lib/auth';
-import StudentDashboard from '@/components/dashboard/StudentDashboard';
-import TutorDashboard from '@/components/dashboard/TutorDashboard';
-import AdminDashboard from '@/components/dashboard/AdminDashboard';
+import StudentDashboard from '@/features/dashboard/components/StudentDashboard';
+import TutorDashboard from '@/features/dashboard/components/TutorDashboard';
+import AdminDashboard from '@/features/dashboard/components/AdminDashboard';
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();

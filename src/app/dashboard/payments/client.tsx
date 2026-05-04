@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DashboardShell from '@/components/dashboard/DashboardShell';
+import DashboardShell from '@/features/dashboard/components/DashboardShell';
 import { JWTPayload } from '@/lib/auth';
-import PaymentGatewayModal from '@/components/payment/PaymentGatewayModal';
-import InvoiceViewer from '@/components/payment/InvoiceViewer';
-import { CreditCard, CheckCircle2, Clock, AlertCircle, FileText, Eye, Search, Filter, Download } from 'lucide-react';
+import PaymentGatewayModal from '@/features/payments/components/PaymentGatewayModal';
+import InvoiceViewer from '@/features/payments/components/InvoiceViewer';
+import { CreditCard, CheckCircle2, Clock, AlertCircle, FileText, Search, Download } from 'lucide-react';
 import { format } from 'date-fns';
 
 const navItems = [
@@ -39,6 +39,25 @@ interface PaymentSession {
   };
 }
 
+interface InvoicePreview {
+  id: string;
+  invoiceNumber: string;
+  status: string;
+  createdAt: string;
+  paidAt?: string;
+  sessionSubject: string;
+  sessionDate: string;
+  duration: number;
+  hourlyRate: number;
+  subtotal: number;
+  platformFee: number;
+  totalAmount: number;
+  transactionId?: string;
+  tutorName?: string;
+  studentName?: string;
+  studentEmail?: string;
+}
+
 export default function PaymentsClient({ user }: { user: JWTPayload }) {
   const [sessions, setSessions] = useState<PaymentSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,11 +67,11 @@ export default function PaymentsClient({ user }: { user: JWTPayload }) {
   // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState<PaymentSession | null>(null);
-  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [, setPaymentProcessing] = useState(false);
 
   // Invoice viewer state
   const [showInvoice, setShowInvoice] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoicePreview | null>(null);
 
   useEffect(() => {
     fetchSessions();

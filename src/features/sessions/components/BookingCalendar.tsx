@@ -15,6 +15,8 @@ interface BookingCalendarProps {
   onDateTimeSelect: (datetime: string) => void;
 }
 
+type CalendarValue = Date | Date[] | null;
+
 export default function BookingCalendar({ tutorId, onDateTimeSelect }: BookingCalendarProps) {
   const [date, setDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
@@ -47,13 +49,14 @@ export default function BookingCalendar({ tutorId, onDateTimeSelect }: BookingCa
     }
   }, [tutorId]);
 
-  const handleDateSelect = (value: any) => {
-    if (value instanceof Date) {
-      setDate(value);
+  const handleDateSelect = (value: CalendarValue) => {
+    const selectedDate = Array.isArray(value) ? value[0] : value;
+    if (selectedDate instanceof Date) {
+      setDate(selectedDate);
       setSelectedSlot(null);
       
       // Get slots for this date
-      const dateStr = value.toISOString().split('T')[0];
+      const dateStr = selectedDate.toISOString().split('T')[0];
       const daySlots = slots.filter(s => s.date === dateStr);
       
       // If there's at least one slot, pre-select the first one
@@ -87,7 +90,8 @@ export default function BookingCalendar({ tutorId, onDateTimeSelect }: BookingCa
         ) : (
           <div className="border rounded-lg p-4 inline-block" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-paper)' }}>
             <Calendar
-              onChange={handleDateSelect}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              onChange={handleDateSelect as any}
               value={date}
               minDate={new Date()}
               tileDisabled={({ date: tileDate }) => {

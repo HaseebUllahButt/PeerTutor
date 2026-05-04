@@ -39,17 +39,17 @@ const PaymentSchema = new Schema<IPayment>({
   platformFee: {
     type: Number,
     required: true,
-    default: function() {
+    default: function(this: IPayment) {
       // 15% platform fee
-      return Math.round((this as any).amount * 0.15);
+      return Math.round(this.amount * 0.15);
     },
   },
   tutorEarnings: {
     type: Number,
     required: true,
-    default: function() {
+    default: function(this: IPayment) {
       // 85% to tutor
-      return Math.round((this as any).amount * 0.85);
+      return Math.round(this.amount * 0.85);
     },
   },
   status: {
