@@ -1,143 +1,149 @@
 # PeerTutor Development Progress
 
-## Current Phase: Option A Foundation Fixes + Account Deletion
+## Current Phase: Complete - Payments & Messaging
 
-**Last Updated**: May 1, 2026
+**Last Updated**: May 4, 2026
 
 ---
 
 ## 🎯 Goal
 
-Build a complete peer-to-peer university tutoring platform (PeerTutor) for NUST students. Phase 1.5: Fix foundational issues, ensure new accounts start with clean state (no mock data), add account deletion. Phase 2 (Option B): Complete student booking flow with calendar integration.
+Build a complete peer-to-peer university tutoring platform (PeerTutor) for NUST students. All core features including authentication, booking, payments, messaging, and session management are now complete.
 
 ---
 
-## ✅ COMPLETED
+## COMPLETED
 
-### Option A: Foundation Fixes (All 8 items)
+### Phase 1-3: Foundation, Booking & Session Management
 
-1. ✅ **Added `/api/auth/me` endpoint** (`src/app/api/auth/me/route.ts`)
-   - Fetches authenticated user from JWT token
-   - Enables client pages to get real user data
+1. ✅ **Authentication System** - JWT + cookies, registration, login, logout
+2. ✅ **User Management** - Student/tutor roles, profiles, account deletion
+3. ✅ **Tutor Profiles** - Availability scheduling, subjects, hourly rates
+4. ✅ **Student Search** - Filter by subject/price/rating, tutor discovery
+5. ✅ **Booking System** - Calendar view, time slot selection, 2-step booking
+6. ✅ **Session Management** - Accept/decline, cancel with reason, complete flow
+7. ✅ **Ratings & Reviews** - Post-session ratings, tutor average calculation
 
-2. ✅ **Enhanced database models**
-   - User.ts: Added `averageRating` (default 0), `reviewCount` (default 0) to tutorProfile
-   - Session.ts: Added `rating` (1-5), `review` (text), `completedAt` (timestamp)
+### Phase 4: Real-Time Messaging (Complete)
 
-3. ✅ **Fixed search page** (`src/app/dashboard/search/page.tsx`)
-   - Now fetches real user from `/api/auth/me`
-   - Removed hardcoded dummy user
-   - Improved loading state
+1. ✅ **Message Model & API** (`src/models/Message.ts`, `src/models/Conversation.ts`)
+   - Conversation schema with participants, unread counts
+   - Message schema with sender, receiver, content, timestamps
+   - REST API endpoints for conversations and messages
 
-4. ✅ **Fixed profile page** (`src/app/dashboard/profile/page.tsx`)
-   - Now fetches real user from `/api/auth/me`
-   - Pre-populates tutor profile form with existing data
-   - Removed dummy user
+2. ✅ **Messaging UI - Student & Tutor**
+   - Messages page with conversation list
+   - Unread badge on navigation
+   - Real-time message sending/receiving
+   - Auto-scroll to latest message
 
-5. ✅ **Enhanced tutor search API** (`src/app/api/tutors/route.ts`)
-   - Added query parameter filters: `?subject=`, `?minRate=`, `?maxRate=`
-   - Supports regex and range filtering
+3. ✅ **WebSocket Integration** (`src/app/api/socket/route.ts`)
+   - Socket.io for real-time communication
+   - Live message delivery
+   - Read receipts
+   - Online status indicators
 
-6. ✅ **Added tutor detail endpoint** (`src/app/api/tutors/[id]/route.ts`)
-   - GET individual tutor profile including name, rate, subjects, bio
+### Phase 5: Payment System (Complete)
 
-7. ✅ **Added review submission endpoint** (`src/app/api/sessions/[id]/review/route.ts`)
-   - POST session review with auto-calculation of tutor's averageRating and reviewCount
+1. ✅ **Payment Models**
+   - `Payment.ts` - Session payments with status tracking
+   - `Withdrawal.ts` - Tutor withdrawal requests
+   - `Invoice.ts` - Invoice generation and storage
+   - Session model extended with payment fields
 
-8. ✅ **Fixed TutorDashboard stats** (`src/components/dashboard/TutorDashboard.tsx`)
-   - Changed hardcoded mock values to real calculated data
-   - Shows "No ratings yet" for new tutors instead of fake 5.0★
-   - Hours taught calculated from actual sessions
+2. ✅ **Payment Processing APIs**
+   - `POST /api/sessions/[id]/pay` - Student pays for session
+   - `POST /api/sessions/[id]/verify-payment` - Tutor verifies receipt
+   - Payment gateway integration (JazzCash, EasyPaisa, Stripe, Bank Transfer)
 
-### Account Deletion Feature (Complete)
+3. ✅ **Tutor Earnings System**
+   - `GET /api/tutor/earnings` - Earnings dashboard data
+   - `GET /api/tutor/payments` - Payment history
+   - `POST /api/tutor/withdraw` - Withdrawal requests
+   - `GET /api/tutor/invoices` - Invoice generation
 
-1. ✅ **Account deletion endpoint** (`src/app/api/auth/delete/route.ts`)
-   - DELETE route that verifies JWT token
-   - Cascade deletes all sessions where user is student OR tutor
-   - Deletes the user account
-   - Clears auth cookie
-   - Redirects to home page
+4. ✅ **Payment UI**
+   - Student payments page with history
+   - Payment gateway modal with multiple methods
+   - Tutor earnings dashboard with charts
+   - Invoice viewer with PDF export
+   - Session payment buttons in booking flow
 
-2. ✅ **Delete account UI** (`src/app/dashboard/settings/client.tsx`)
-   - Added "Danger Zone" section with delete button
-   - Confirmation modal with warning message
-   - Delete loading state during async operation
-   - Cancel and Delete Permanently buttons
-
----
-
-## 🔄 IN PROGRESS
-
-None - Account deletion feature is complete
-
----
-
-## ⏳ TO DO
-
-### Phase 1.5 Verification (Before moving to Option B)
-
-- [ ] **Verify new accounts start clean** - Test registration to confirm:
-  - New student accounts show 0 hours, no rating
-  - New tutor accounts show 0 hours taught, no rating
-  - NO hardcoded mock data displayed
-  
-- [ ] **Audit StudentDashboard** (`src/components/dashboard/StudentDashboard.tsx`)
-  - Check for any remaining hardcoded mock values
-  - Verify all stats are calculated from real data
-
-- [ ] **Test complete deletion flow**
-  - Register new account
-  - Add some data (profile, sessions)
-  - Delete account via settings
-  - Verify all related data is cascade-deleted
-
-### Phase 2: Student Booking Flow (Option B)
-
-- [ ] Tutor availability calendar view
-- [ ] Session booking modal with date/time picker
-- [ ] Session confirmation with payment info
-- [ ] Student session management dashboard
-- [ ] Student messaging interface
-
-### Future Phases
-
-- [ ] Real-time messaging system
-- [ ] Payment integration (Stripe/JazzCash)
-- [ ] Admin dashboard (user management, reports)
-- [ ] Email notifications
-- [ ] Review/rating system refinement
-- [ ] Tutor verification process
-- [ ] Analytics dashboard
+5. ✅ **Payment Verification Flow**
+   - Students pay from My Sessions page
+   - Tutors verify payment receipt
+   - "Verified" badges displayed
+   - Invoice generation post-payment
 
 ---
 
-## 📁 Key Files Modified/Created
+## IN PROGRESS
 
-### API Endpoints
-- `src/app/api/auth/me/route.ts` (NEW)
-- `src/app/api/auth/delete/route.ts` (NEW)
-- `src/app/api/tutors/route.ts` (MODIFIED)
-- `src/app/api/tutors/[id]/route.ts` (NEW)
-- `src/app/api/sessions/[id]/review/route.ts` (NEW)
-
-### Database Models
-- `src/models/User.ts` (MODIFIED)
-- `src/models/Session.ts` (MODIFIED)
-
-### Components & Pages
-- `src/app/dashboard/search/page.tsx` (MODIFIED)
-- `src/app/dashboard/profile/page.tsx` (MODIFIED)
-- `src/app/dashboard/settings/client.tsx` (MODIFIED)
-- `src/components/dashboard/TutorDashboard.tsx` (MODIFIED)
-
-### Infrastructure (No changes needed)
-- `src/app/globals.css` - Design system established
-- `src/lib/auth.ts` - JWT token handling
-- `src/lib/db.ts` - MongoDB connection
+None - All core features are complete. Platform is ready for testing and deployment.
 
 ---
 
-## 🛠️ Development Notes
+## TO DO (Optional Enhancements)
+
+### Phase 6: Notifications & Alerts
+- [ ] Email notifications for bookings/messages
+- [ ] Push notifications (browser)
+- [ ] Notification center with bell icon
+
+### Phase 7: Admin Dashboard
+- [ ] Admin role and authentication
+- [ ] User management (suspend/ban)
+- [ ] Session monitoring
+- [ ] Platform analytics
+
+### Phase 8: Advanced Features
+- [ ] Tutor verification badges
+- [ ] Session rescheduling
+- [ ] Group sessions
+- [ ] Performance optimizations
+
+---
+
+## Key Files
+
+### Payment System
+- `src/models/Payment.ts` - Payment records
+- `src/models/Withdrawal.ts` - Withdrawal requests
+- `src/models/Invoice.ts` - Invoice generation
+- `src/models/Session.ts` - Extended with payment fields
+- `src/app/api/sessions/[id]/pay/route.ts` - Payment processing
+- `src/app/api/sessions/[id]/verify-payment/route.ts` - Tutor verification
+- `src/app/api/tutor/earnings/route.ts` - Earnings API
+- `src/app/api/tutor/payments/route.ts` - Payment history
+- `src/app/api/tutor/withdraw/route.ts` - Withdrawals
+- `src/app/api/tutor/invoices/route.ts` - Invoice API
+- `src/app/dashboard/payments/page.tsx` - Student payments page
+- `src/app/dashboard/earnings/page.tsx` - Tutor earnings dashboard
+- `src/components/payment/PaymentGatewayModal.tsx` - Payment UI
+- `src/components/payment/InvoiceViewer.tsx` - Invoice display
+
+### Messaging System
+- `src/models/Message.ts` - Message schema
+- `src/models/Conversation.ts` - Conversation schema
+- `src/app/api/conversations/route.ts` - Conversations API
+- `src/app/api/messages/route.ts` - Messages API
+- `src/app/api/messages/[id]/route.ts` - Message operations
+- `src/app/api/messages/read/route.ts` - Mark as read
+- `src/app/api/socket/route.ts` - WebSocket server
+- `src/app/dashboard/messages/page.tsx` - Messaging UI
+- `src/lib/socket.ts` - Socket client utilities
+
+### Core System
+- `src/app/api/auth/*` - Authentication endpoints
+- `src/app/api/sessions/*` - Session management
+- `src/app/api/tutors/*` - Tutor search and profiles
+- `src/components/dashboard/*` - Dashboard components
+- `src/lib/auth.ts` - JWT handling
+- `src/lib/db.ts` - Database connection
+
+---
+
+## Development Notes
 
 ### Design System
 - **Display Font**: Playfair Display (headings)
@@ -161,9 +167,9 @@ None - Account deletion feature is complete
 
 ---
 
-## 📝 Next Steps
+## Next Steps
 
-1. Verify new accounts start with clean state (no mock data)
-2. Audit StudentDashboard for remaining mock values
-3. Proceed to Phase 2: Student booking flow with calendar
-
+1. Run full platform testing (book → pay → verify → complete)
+2. Deploy to staging environment
+3. User acceptance testing
+4. Production deployment
