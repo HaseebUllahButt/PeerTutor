@@ -14,7 +14,7 @@ interface Props {
 
 export default function TutorDashboard({ user }: Props) {
   const router = useRouter();
-  const [sessions, setSessions] = useState<Array<{ _id: string; status: string; subject: string; scheduledAt: string; student?: { name?: string } }>>([]);
+  const [sessions, setSessions] = useState<Array<{ _id: string; status: string; subject: string; scheduledAt: string; duration?: number; student?: { name?: string } }>>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -104,7 +104,10 @@ export default function TutorDashboard({ user }: Props) {
 
   const pendingRequests = sessions.filter(s => s.status === 'pending');
   const upcomingSessions = sessions.filter(s => s.status === 'accepted');
-  const hoursCalculation = upcomingSessions.length * 1; // Placeholder - calculate from session duration
+  const completedSessions = sessions.filter(s => s.status === 'completed');
+  const hoursCalculation = Math.round(
+    completedSessions.reduce((sum, s) => sum + (s.duration ?? 1), 0)
+  );
   const rating = user.tutorProfile?.averageRating ?? 0;
 
   return (

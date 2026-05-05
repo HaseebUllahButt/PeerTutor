@@ -207,6 +207,50 @@ export async function deleteAccount() {
   }
 }
 
+export async function updateCurrentUser(request: Request) {
+  try {
+    const token = await resolveAuthToken(request);
+    if (!token) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+
+    const payload = verifyToken(token);
+    if (!payload) return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
+
+    const body = await request.json();
+    const name = typeof body.name === 'string' ? body.name.trim() : null;
+    if (!name || name.length < 2) {
+      return NextResponse.json({ message: 'Name must be at least 2 characters' }, { status: 400 });
+    }
+
+    await connectToDatabase();
+    const user = await User.findByIdAndUpdate(
+      payload.userId,
+      { name },
+      { new: true, select: 'name email role' }
+    );
+    if (!user) return NextResponse.json({ message: 'User not found' }, { status: 404 });
+
+    // Re-issue JWT so the sidebar/topbar reflects the new name immediately
+    const newToken = signToken({
+      userId: user._id.toString(),
+      role: user.role,
+      name: user.name,
+      email: user.email,
+    });
+    const response = NextResponse.json({ message: 'Profile updated', user: { name: user.name, email: user.email, role: user.role } });
+    response.cookies.set('token', newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    });
+    return response;
+  } catch (error) {
+    console.error('Update Profile Error:', error);
+    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
 export async function getTabSessionToken() {
   try {
     const cookieStore = await cookies();

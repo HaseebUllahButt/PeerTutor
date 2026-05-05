@@ -10,6 +10,7 @@ const navByRole: Record<string, { label: string; href: string; icon: string }[]>
     { label: 'Overview',      href: '/dashboard',          icon: '' },
     { label: 'Search Tutors', href: '/dashboard/search',   icon: '' },
     { label: 'My Sessions',   href: '/dashboard/sessions', icon: '' },
+    { label: 'My Payments',   href: '/dashboard/payments', icon: '' },
     { label: 'Messages',      href: '/dashboard/messages', icon: '' },
     { label: 'Settings',      href: '/dashboard/settings', icon: '' },
   ],
@@ -32,6 +33,8 @@ export default function SettingsClient({ user }: { user: JWTPayload }) {
   const router = useRouter();
   const navItems = navByRole[user.role] ?? navByRole.student;
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [name, setName] = useState(user.name);
   const [email] = useState(user.email);
   const [notifSessions, setNotifSessions] = useState(true);
@@ -39,10 +42,28 @@ export default function SettingsClient({ user }: { user: JWTPayload }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaving(true);
+    setSaveError('');
+    try {
+      const res = await fetch('/api/auth/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        const data = await res.json();
+        setSaveError(data.message || 'Failed to save changes');
+      }
+    } catch {
+      setSaveError('Network error — please try again');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDeleteAccount() {
@@ -131,14 +152,20 @@ export default function SettingsClient({ user }: { user: JWTPayload }) {
            <div className="flex items-center gap-3">
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
+              disabled={saving}
+              className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-60"
               style={{ backgroundColor: 'var(--color-ink)', color: 'var(--color-canvas)', fontFamily: 'var(--font-sans)' }}
             >
-              Save Changes
+              {saving ? 'Saving…' : 'Save Changes'}
             </button>
             {saved && (
               <span className="text-sm font-medium" style={{ color: 'var(--color-emerald)', fontFamily: 'var(--font-sans)' }}>
                 ✓ Saved!
+              </span>
+            )}
+            {saveError && (
+              <span className="text-sm font-medium" style={{ color: 'var(--color-danger)', fontFamily: 'var(--font-sans)' }}>
+                {saveError}
               </span>
             )}
           </div>

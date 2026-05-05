@@ -47,10 +47,12 @@ export default function ReportsClient({ user }: { user: JWTPayload }) {
           <h2 className="text-base font-bold mb-4" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}>Platform Health</h2>
           <div className="space-y-3">
             {[
-              { label: 'User Registration', status: 'Operational', ok: true },
-              { label: 'Session Booking', status: 'Operational', ok: true },
-              { label: 'Authentication', status: 'Operational', ok: true },
-              { label: 'Direct Messaging', status: 'Coming Soon', ok: false },
+              { label: 'User Registration',  status: 'Operational', ok: true },
+              { label: 'Session Booking',    status: 'Operational', ok: true },
+              { label: 'Authentication',     status: 'Operational', ok: true },
+              { label: 'Direct Messaging',   status: 'Operational', ok: true },
+              { label: 'Payment Processing', status: 'Operational', ok: true },
+              { label: 'Notifications',      status: 'Operational', ok: true },
             ].map(item => (
               <div key={item.label} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: 'var(--color-border)' }}>
                 <p className="text-sm font-medium" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-sans)' }}>{item.label}</p>

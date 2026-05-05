@@ -1,17 +1,17 @@
 # PeerTutor Development Roadmap
 
-**Status**: Production Ready - Core Features Complete & Optimized
-**Last Updated**: May 4, 2026
+**Status**: Production Ready — All Core Features Complete
+**Last Updated**: May 5, 2026
 
 ---
 
 ## COMPLETED FEATURES
 
-### Phase 0-3: Foundation, Booking & Session Management
+### Phase 0–3: Foundation, Booking & Session Management
 | Feature | Status |
 |---------|--------|
 | Authentication (JWT + cookies) | ✅ |
-| User roles (Student/Tutor) | ✅ |
+| User roles (Student / Tutor / Admin) | ✅ |
 | Tutor profiles & availability | ✅ |
 | Student search & filtering | ✅ |
 | Booking system with calendar | ✅ |
@@ -20,32 +20,50 @@
 | Cancellation tracking | ✅ |
 | Account deletion | ✅ |
 
-### Phase 4: Real-Time Messaging (Complete)
+### Phase 4: Real-Time Messaging
 - ✅ Message and Conversation models
-- ✅ REST API endpoints
+- ✅ REST API endpoints (conversations, messages, read receipts)
 - ✅ WebSocket server (Socket.io)
-- ✅ Messaging UI with conversation list
-- ✅ Unread message badges
+- ✅ Messaging UI — conversation list, chat window, message bubbles
+- ✅ Unread message badges (live via socket)
 - ✅ Real-time message delivery
 - ✅ Read receipts
+- ✅ Delete message feature
 
-### Phase 5: Payment System (Complete)
+### Phase 5: Payment System
 - ✅ Payment, Withdrawal, and Invoice models
 - ✅ Session payment processing API
 - ✅ Tutor payment verification API
-- ✅ Tutor earnings dashboard
-- ✅ Withdrawal system
-- ✅ Invoice generation
+- ✅ Tutor earnings dashboard with 6-month bar chart
+- ✅ Withdrawal system (JazzCash, EasyPaisa, Bank Transfer)
+- ✅ Invoice generation & viewer
 - ✅ Payment gateway UI (JazzCash, EasyPaisa, Stripe, Bank Transfer)
-- ✅ Student payments page
-- ✅ End-to-end payment verification flow
+- ✅ Student payments page with search & filter
+- ✅ End-to-end payment → tutor verification flow
 
-### Phase 6: Maintenance & Optimization (Complete)
-- ✅ Fixed all TypeScript and Build errors
-- ✅ Resolved all ESLint warnings (Unused vars, Imports, etc.)
-- ✅ Optimized all messaging images with `next/image`
-- ✅ Cleaned up scratch scripts and redundant documentation
-- ✅ Verified production-ready build status (0 errors, 0 warnings)
+### Phase 6: Notifications System
+- ✅ Notification model (type, title, body, link, read, timestamps)
+- ✅ Notification types: booking_request, booking_accepted, booking_declined, booking_cancelled, session_complete, new_message, payment_received, session_reminder
+- ✅ REST endpoints: GET (latest 30), PATCH (mark all read), DELETE (clear all)
+- ✅ Bell icon in header with live unread count
+- ✅ Notification dropdown panel with type icons and relative timestamps
+- ✅ Real-time push via Socket.io (`notification` event)
+- ✅ Auto-mark-read on panel open
+
+### Phase 7: Admin Dashboard
+- ✅ Admin role in User model
+- ✅ Admin-only route protection (stats, users endpoints)
+- ✅ Admin dashboard — overview with platform stats & recent signups
+- ✅ Manage Users page — full user list with search, role filter, pagination (`GET /api/admin/users`)
+- ✅ Reports page — platform health status for all systems
+
+### Phase 8: Bug Fixes & Polish
+- ✅ Settings page now actually saves display name to DB (PATCH /api/auth/me re-issues JWT)
+- ✅ Tutor "Hours Taught" stat now sums real completed-session durations
+- ✅ Nav items consistent across all pages for every role
+- ✅ Reports page shows correct system statuses (no stale "Coming Soon" entries)
+- ✅ All TypeScript errors resolved — clean build (0 errors, 0 warnings)
+- ✅ ESLint clean
 
 ---
 
@@ -54,6 +72,7 @@
 | Feature | Status | Progress |
 |---------|--------|----------|
 | Authentication | ✅ Complete | 100% |
+| Profile Updates (name save) | ✅ Complete | 100% |
 | Tutor Profiles | ✅ Complete | 100% |
 | Availability Management | ✅ Complete | 100% |
 | Student Search | ✅ Complete | 100% |
@@ -66,242 +85,101 @@
 | Earnings Dashboard | ✅ Complete | 100% |
 | Invoice System | ✅ Complete | 100% |
 | Withdrawal System | ✅ Complete | 100% |
+| Notifications | ✅ Complete | 100% |
+| Admin Dashboard | ✅ Complete | 100% |
+| Admin User Management | ✅ Complete | 100% |
+| Platform Reports | ✅ Complete | 100% |
 | Build & Lint Quality | ✅ Optimized | 100% |
-| Analytics | 🔶 Partial | 30% |
-| Admin Dashboard | 🔶 Partial | 30% |
+
+---
+
+## Current Codebase Status
+
+### Models
+- ✅ User.ts — Authentication, profiles, admin role
+- ✅ Session.ts — Bookings with full payment fields
+- ✅ Message.ts — Chat messages with delete support
+- ✅ Conversation.ts — Chat conversations with unread count
+- ✅ Payment.ts — Payment records
+- ✅ Withdrawal.ts — Withdrawal requests
+- ✅ Invoice.ts — Invoice generation
+- ✅ Notification.ts — In-app notifications
+
+### API Endpoints
+- ✅ Auth — register, login, logout, GET /me, PATCH /me (name update), delete, tab-session
+- ✅ Tutors — list, detail, availability slots
+- ✅ Tutor — profile, earnings, payments, invoices, withdraw
+- ✅ Sessions — list/create, update, cancel, review, pay, verify-payment
+- ✅ Messages — conversations, messages by conversation, send, read, delete
+- ✅ Notifications — GET (latest 30), PATCH (mark read), DELETE (clear all)
+- ✅ Admin — stats, GET /admin/users (search + role filter + pagination)
+
+### Pages
+- ✅ Landing page
+- ✅ Auth — login, register
+- ✅ Student Dashboard — overview, search, sessions, payments, messages, settings
+- ✅ Tutor Dashboard — schedule, students, requests, messages, earnings, profile
+- ✅ Admin Dashboard — overview, manage users, reports, settings
+- ✅ Earnings — balance cards, 6-month chart, payment history, withdrawals
+- ✅ Payments — student payment history with search/filter, invoice viewer
+- ✅ Invoices — invoice list and detail viewer
+- ✅ Messages — full real-time chat interface
+
+### Components
+- ✅ DashboardShell — sidebar, topbar, mobile drawer, NotificationBell
+- ✅ StudentDashboard, TutorDashboard, AdminDashboard
+- ✅ BookingCalendar, CancellationModal, RatingModal
+- ✅ PaymentGatewayModal, InvoiceViewer
+- ✅ Messaging — ConversationList, ChatWindow, MessageBubble, MessageInput, NewConversationModal, UnreadBadge
+- ✅ NotificationBell — dropdown, real-time, mark-read, clear-all
+
+### Architecture
+- ✅ Feature-based module layout under `src/features/`
+- ✅ Route handlers are thin, delegating to feature server handlers
+- ✅ Shared lib utilities: auth, db, socket, notifications, availability, tabAuth, resolveAuthToken
 
 ---
 
 ## REMAINING PHASES (Optional Enhancements)
 
-### **PHASE 6: Notifications & Alerts**
+### Phase 9: Advanced Admin Features
+- [ ] Suspend / ban users (set status field on User model)
+- [ ] View all sessions as admin (cross-user session list)
+- [ ] Dispute resolution interface — approve/deny refund requests
+- [ ] Content moderation — flag and remove inappropriate reviews/messages
 
-**Purpose**: Keep users informed of important events
-
-#### Phase 6 Step 1: Notification Model & System
-- [ ] Create Notification schema (user, type, content, read, createdAt)
-- [ ] Notification types: booking_request, booking_accepted, session_complete, new_message, etc.
-- [ ] Notification endpoints: GET, PATCH, DELETE
-
-#### Phase 6 Step 2: In-App Notifications
-- [ ] Bell icon in header with unread count
-- [ ] Notification dropdown panel
-- [ ] Clear old notifications
-
-#### Phase 6 Step 3: Email Notifications
-- [ ] Email templates for each event type
-- [ ] Send email on: booking request, acceptance, rejection, session reminder (24h before)
-- [ ] Email preference settings
-
----
-
-### **PHASE 7: Admin Dashboard & Moderation**
-
-**Purpose**: Monitor platform health and manage users
-
-#### Phase 7 Step 1: Admin Panel Setup
-- [x] Create Admin role in User model
-- [x] Admin authentication & authorization (role checks on admin stats)
-- [x] Admin-only routes protection (stats endpoint)
-- [x] Admin dashboard layout (shell + basic dashboard)
-
-#### Phase 7 Step 2: User Management
-- [ ] View all users (students/tutors)
-- [ ] User status: active/suspended/banned
-- [ ] Suspend/ban users
-- [ ] View user details & sessions
-
-#### Phase 7 Step 3: Platform Analytics
-- [ ] Total users, sessions, revenue
-- [ ] Active users (weekly/monthly)
-- [ ] Top tutors by rating/earnings
-- [ ] Cancellation rate monitoring
-
----
-
-### **PHASE 7: Reviews & Testimonials System**
-
-**Purpose**: Build social proof and trust
-
-#### Phase 7 Step 1: Enhanced Review Model
-- [ ] Extend rating to include: comment, anonymous option, helpful counter
-- [ ] Create Review schema (rating, comment, student, tutor, session, verified purchase)
-- [ ] Review moderation (flag inappropriate content)
-
-#### Phase 7 Step 2: Tutor Reviews Page
-- [ ] Public reviews page showing all ratings/comments
-- [ ] Filter by rating (5★, 4★, etc.)
-- [ ] Sort by recent/helpful/rating
+### Phase 10: Reviews & Social Proof
+- [ ] Extended review model — comments, anonymous option, helpful counter
+- [ ] Public tutor reviews page with filter/sort
+- [ ] Review highlights on tutor card in search results
 - [ ] Tutor response to reviews
-- [ ] Review statistics chart
 
-#### Phase 7 Step 3: Student Reviews (Optional)
-- [ ] Tutors can rate students (punctuality, communication, etc.)
-- [ ] Mutual review system
-- [ ] Student badges (reliable, great communicator, etc.)
+### Phase 11: Advanced Features
+- [ ] Session rescheduling — student proposes, tutor approves/rejects
+- [ ] Tutor verification badges — document upload, manual admin approval
+- [ ] Group sessions — multiple students booking the same slot
+- [ ] Email notifications — booking events, session reminders (24h before)
 
-#### Phase 7 Step 4: Testimonials Display
-- [ ] Featured reviews on tutor profile
-- [ ] Review highlights on tutor card (search page)
-- [ ] Aggregate stats (avg rating, total reviews)
-
----
-
-### **PHASE 8: Admin Dashboard & Moderation**
-
-**Purpose**: Monitor platform health and manage users
-
-#### Phase 8 Step 1: Admin Panel Setup
-- [x] Create Admin role in User model
-- [x] Admin authentication & authorization
-- [x] Admin-only routes protection
-- [x] Admin dashboard layout
-
-#### Phase 8 Step 2: User Management
-- [ ] View all users (students/tutors)
-- [ ] User status: active/suspended/banned
-- [ ] Suspend/ban users
-- [ ] View user details & sessions
-- [ ] Delete user account (admin action)
-
-#### Phase 8 Step 3: Session Management & Disputes
-- [ ] View all sessions with status
-- [ ] Dispute resolution interface
-- [ ] Approve/deny refund requests
-- [ ] Handle cancellation appeals
-
-#### Phase 8 Step 4: Platform Analytics
-- [ ] Total users, sessions, revenue
-- [ ] Active users (weekly/monthly)
-- [ ] Top tutors by rating/earnings
-- [ ] Cancellation rate monitoring
-- [ ] Revenue breakdown
-
-#### Phase 8 Step 5: Content Moderation
-- [ ] Flag inappropriate reviews/messages
-- [ ] Review flagged content
-- [ ] Delete offensive reviews
-- [ ] Warn/suspend users for violations
-
----
-
-### **PHASE 9: Advanced Features & Optimizations**
-
-**Purpose**: Add competitive features and improve performance
-
-#### Phase 9 Step 1: Tutor Verification & Badges
-- [ ] Document upload (ID, degree)
-- [ ] Manual admin verification
-- [ ] "Verified" badge on profile
-- [ ] Trust score calculation
-
-#### Phase 9 Step 2: Session Rescheduling
-- [ ] Allow student to propose reschedule
-- [ ] Tutor approve/reject reschedule
-- [ ] Automatic slot release & rebooking
-
-#### Phase 9 Step 3: Group Sessions
-- [ ] Allow tutors to offer group sessions
-- [ ] Multiple students booking same time
-- [ ] Group session management
-
-#### Phase 9 Step 4: Performance Tracking
-- [ ] Cache frequently accessed tutors
-- [ ] Optimize search queries
-- [ ] CDN for static assets
-- [ ] Database indexing
-
-#### Phase 9 Step 5: Mobile Responsiveness
-- [ ] Test all pages on mobile
-- [ ] Optimize modal sizing
-- [ ] Touch-friendly buttons
-- [ ] Mobile-first CSS
-
----
-
-### **PHASE 10: Testing & Quality Assurance**
-
-**Purpose**: Ensure reliability and correctness
-
-#### Phase 10 Step 1: Unit Tests
-- [ ] Test utility functions
-- [ ] Test validation logic
-- [ ] Test calculations (earnings, ratings, etc.)
-
-#### Phase 10 Step 2: Integration Tests
-- [ ] Test API endpoints
-- [ ] Test booking flow end-to-end
-- [ ] Test payment flow
-- [ ] Test messaging
-
-#### Phase 10 Step 3: E2E Tests (Cypress/Playwright)
-- [ ] Test complete user journeys
-- [ ] Test edge cases
-- [ ] Test error states
-
-#### Phase 10 Step 4: Bug Fixes & Polish
-- [ ] User testing feedback
-- [ ] Performance optimization
-- [ ] UI/UX refinements
+### Phase 12: Testing & QA
+- [ ] Unit tests — utility functions, calculations, validation logic
+- [ ] Integration tests — API endpoint coverage
+- [ ] E2E tests (Cypress / Playwright) — full user journeys
 - [ ] Accessibility audit
 
 ---
 
 ## Next Steps
 
-### Immediate (Required for Launch)
-1. **Platform Testing** - End-to-end testing of all flows
-2. **Security Audit** - Rate limiting, input sanitization, CSRF/XSS protection
-3. **Staging Deployment** - Deploy to staging environment
-4. **User Acceptance Testing** - Beta testing with real users
-5. **Production Deployment** - Go live!
+### Pre-Launch Checklist
+1. **End-to-end testing** — walk through all student and tutor flows
+2. **Security audit** — rate limiting, input sanitization, CSRF/XSS hardening
+3. **Environment setup** — production `.env` with real `MONGODB_URI` and `JWT_SECRET`
+4. **Staging deployment** — verify socket server + Next.js work together in production mode
+5. **User acceptance testing** — beta test with real NUST students
+6. **Production deployment** — go live
 
-### Future Enhancements (Optional)
-- Email notifications
-- Admin dashboard
-- Mobile app
-- Advanced analytics
-
----
-
-## Current Codebase Status
-
-### Models (All Complete)
-- ✅ User.ts - Authentication & profiles
-- ✅ Session.ts - Bookings with payment fields
-- ✅ Message.ts - Chat messages
-- ✅ Conversation.ts - Chat conversations
-- ✅ Payment.ts - Payment records
-- ✅ Withdrawal.ts - Withdrawal requests
-- ✅ Invoice.ts - Invoice generation
-- 📋 Notification.ts - Not started (optional)
-
-### API Endpoints (All Core Complete)
-- ✅ Auth (register, login, logout, me, delete, tab-session)
-- ✅ Tutors (list, detail, availability)
-- ✅ Tutor (profile, earnings, payments, invoices, withdraw)
-- ✅ Sessions (list/create, update, cancel, review, pay, verify-payment)
-- ✅ Messages (conversations, messages, read, socket)
-- 📋 Notifications - Not started (optional)
-
-### Pages (All Core Complete)
-- ✅ Auth (login, register)
-- ✅ Dashboard (overview, search, sessions, requests, profile, earnings, payments)
-- ✅ Messages - Full chat interface
-- ✅ Earnings - Complete with charts
-- ✅ Payments - Student payment history
-- ✅ Invoices - Invoice viewer
-- 📋 Reports - Partial (optional)
-- 📋 Admin - Not started (optional)
-
-### Components (All Complete)
-- ✅ DashboardShell, StudentDashboard, TutorDashboard
-- ✅ BookingCalendar, CancellationModal, RatingModal
-- ✅ PaymentGatewayModal, InvoiceViewer
-- ✅ Messaging UI components
-
-### Architecture (Current)
-- ✅ Feature-based modules for API logic and UI components under src/features
-- ✅ Route handlers thin, delegating to feature server handlers
-
----
+### Future Enhancements (Post-Launch)
+- Email notifications (nodemailer / SendGrid)
+- Mobile app (React Native)
+- Advanced analytics (revenue breakdown, active user trends)
+- Tutor verification with document upload
