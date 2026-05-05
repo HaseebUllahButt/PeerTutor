@@ -85,7 +85,7 @@ export async function sendMessage(request: Request) {
 
     const publicMsg = serializeMessage(populatedMessage);
 
-    const participantUserIds = conversation.participants.map((p: { userId: { toString: () => string } }) =>
+    const participantUserIds: string[] = conversation.participants.map((p: { userId: { toString: () => string } }) =>
       p.userId.toString()
     );
 
@@ -99,9 +99,9 @@ export async function sendMessage(request: Request) {
       ? parsed.content.slice(0, 60) + '…'
       : parsed.content;
 
-    const recipientIds = participantUserIds.filter((id) => id !== user.userId);
+    const recipientIds = participantUserIds.filter((id: string) => id !== user.userId);
     await Promise.all(
-      recipientIds.map((recipientId) =>
+      recipientIds.map((recipientId: string) =>
         createNotification({
           userId: recipientId,
           type: 'new_message',
@@ -272,7 +272,7 @@ export async function markMessagesRead(request: Request) {
       }
     );
 
-    const participantUserIds = conversation.participants.map((p: { userId: { toString: () => string } }) =>
+    const participantUserIds: string[] = conversation.participants.map((p: { userId: { toString: () => string } }) =>
       p.userId.toString()
     );
 
