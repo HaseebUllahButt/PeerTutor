@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { clearTabAuthToken } from '@/lib/tabAuth';
+import NotificationBell from './NotificationBell';
 
 interface NavItem {
   label: string;
@@ -270,6 +271,7 @@ export default function DashboardShell({ user, navItems, children }: DashboardSh
             Welcome back, <span className="font-semibold" style={{ color: 'var(--color-ink)' }}>{user.name.split(' ')[0]}</span>
           </p>
           <div className="flex items-center gap-3 ml-auto">
+            <NotificationBell />
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
               style={{ backgroundColor: 'var(--color-gold)', color: '#0e0f11', fontFamily: 'var(--font-sans)' }}

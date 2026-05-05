@@ -1,8 +1,10 @@
 'use client';
 
-import { Check, CheckCheck } from 'lucide-react';
+import { useState } from 'react';
+import { Check, CheckCheck, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import { authenticatedFetch } from '@/lib/authenticatedFetch';
 
 interface MessageSender {
   _id: string;
@@ -36,13 +38,18 @@ interface MessageBubbleProps {
   message: Message;
   isMine: boolean;
   showAvatar?: boolean;
+  onDelete?: (messageId: string) => void;
 }
 
 export default function MessageBubble({
   message,
   isMine,
   showAvatar = true,
+  onDelete,
 }: MessageBubbleProps) {
+  const [hovered, setHovered] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -52,14 +59,35 @@ export default function MessageBubble({
       .slice(0, 2);
   };
 
+  const handleDelete = async () => {
+    if (!confirm('Delete this message?')) return;
+    setDeleting(true);
+    try {
+      const res = await authenticatedFetch(`/api/messages/${message._id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        onDelete?.(message._id);
+      }
+    } catch (e) {
+      console.error('Delete failed:', e);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const readByOthers = message.readStatus.readBy.filter((r) => r.userId !== message.senderId._id);
   const isRead = readByOthers.length > 0;
   const isDelivered = Boolean(message.deliveredAt);
 
   return (
-    <div className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-      <div className={`flex gap-2 max-w-[75%] ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
-        {/* Avatar - only show for others and on first message in sequence */}
+    <div
+      className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div className={`flex gap-2 max-w-[75%] items-end ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
+        {/* Avatar */}
         {!isMine && showAvatar && (
           <div className="flex-shrink-0 mt-1">
             <div
@@ -86,9 +114,31 @@ export default function MessageBubble({
           </div>
         )}
 
+        {/* Delete button — shown on hover, only for own messages */}
+        {isMine && hovered && !message.isDeleted && (
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            title="Delete message"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: deleting ? 'not-allowed' : 'pointer',
+              padding: '4px',
+              borderRadius: '6px',
+              opacity: deleting ? 0.4 : 0.6,
+              color: 'var(--color-danger)',
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '20px',
+            }}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+
         {/* Message Content */}
         <div className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
-          {/* Sender Name - only show for others */}
           {!isMine && showAvatar && (
             <span
               className="text-xs mb-1 ml-1"
@@ -102,24 +152,34 @@ export default function MessageBubble({
           <div
             className="px-4 py-2.5 rounded-2xl shadow-sm"
             style={{
-              backgroundColor: isMine ? 'var(--color-gold)' : 'var(--color-canvas)',
+              backgroundColor: message.isDeleted
+                ? 'var(--color-paper-dark)'
+                : isMine
+                ? 'var(--color-gold)'
+                : 'var(--color-canvas)',
               borderTopLeftRadius: !isMine ? '4px' : undefined,
               borderTopRightRadius: isMine ? '4px' : undefined,
-              border: isMine ? 'none' : '1px solid var(--color-border)',
+              border: isMine && !message.isDeleted ? 'none' : '1px solid var(--color-border)',
+              opacity: message.isDeleted ? 0.6 : 1,
             }}
           >
             <p
               className="text-sm leading-relaxed"
               style={{
-                color: isMine ? 'var(--color-canvas)' : 'var(--color-ink)',
+                color: message.isDeleted
+                  ? 'var(--color-ink-50)'
+                  : isMine
+                  ? 'var(--color-canvas)'
+                  : 'var(--color-ink)',
                 fontFamily: 'var(--font-sans)',
+                fontStyle: message.isDeleted ? 'italic' : 'normal',
               }}
             >
-              {message.content.body}
+              {message.isDeleted ? 'This message was deleted' : message.content.body}
             </p>
           </div>
 
-          {/* Meta Info */}
+          {/* Meta */}
           <div className="flex items-center gap-1 mt-1">
             <span
               className="text-xs"
@@ -128,17 +188,13 @@ export default function MessageBubble({
               {format(new Date(message.createdAt), 'h:mm a')}
             </span>
 
-            {message.isEdited && (
-              <span
-                className="text-xs"
-                style={{ color: 'var(--color-ink-50)', fontFamily: 'var(--font-sans)' }}
-              >
+            {message.isEdited && !message.isDeleted && (
+              <span className="text-xs" style={{ color: 'var(--color-ink-50)', fontFamily: 'var(--font-sans)' }}>
                 • edited
               </span>
             )}
 
-            {/* Sent / delivered / read — own messages only */}
-            {isMine && (
+            {isMine && !message.isDeleted && (
               <span className="flex items-center ml-1" aria-label={isRead ? 'Read' : isDelivered ? 'Delivered' : 'Sent'}>
                 {isRead ? (
                   <CheckCheck className="w-3.5 h-3.5" style={{ color: '#3b82f6' }} />
@@ -155,3 +211,4 @@ export default function MessageBubble({
     </div>
   );
 }
+

@@ -10,6 +10,7 @@ import { resolveAuthToken } from '@/lib/resolveAuthToken';
 import { broadcastNewMessageToParticipants, broadcastPeerReadReceipt } from '@/lib/socket';
 import { serializeMessage } from '@/lib/messagingSerialize';
 import { enrichConversationsForViewer } from '@/lib/conversationPresentation';
+import { createNotification } from '@/lib/notifications';
 
 const sendMessageSchema = z.object({
   conversationId: z.string().min(1, 'Conversation ID is required'),
@@ -92,6 +93,24 @@ export async function sendMessage(request: Request) {
       conversationId: parsed.conversationId,
       message: publicMsg,
     });
+
+    // Notify all other participants (not the sender)
+    const preview = parsed.content.length > 60
+      ? parsed.content.slice(0, 60) + '…'
+      : parsed.content;
+
+    const recipientIds = participantUserIds.filter((id) => id !== user.userId);
+    await Promise.all(
+      recipientIds.map((recipientId) =>
+        createNotification({
+          userId: recipientId,
+          type: 'new_message',
+          title: `New message from ${user.name}`,
+          body: preview,
+          link: '/dashboard/messages',
+        })
+      )
+    );
 
     return NextResponse.json({
       message: 'Message sent successfully',

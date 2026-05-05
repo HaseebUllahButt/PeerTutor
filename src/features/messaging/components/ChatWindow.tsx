@@ -67,6 +67,7 @@ interface ChatWindowProps {
   currentUserId: string;
   onBack?: () => void;
   onSendMessage: (content: string) => void;
+  onDeleteMessage?: (messageId: string) => void;
   isLoading?: boolean;
 }
 
@@ -76,6 +77,7 @@ export default function ChatWindow({
   currentUserId,
   onBack,
   onSendMessage,
+  onDeleteMessage,
   isLoading = false,
 }: ChatWindowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -109,7 +111,7 @@ export default function ChatWindow({
           {onBack && (
             <button
               onClick={onBack}
-              className="p-2 rounded-lg transition-all lg:hidden"
+              className="p-2 rounded-lg transition-all"
               style={{ backgroundColor: 'var(--color-canvas)' }}
             >
               <ArrowLeft className="w-5 h-5" style={{ color: 'var(--color-ink)' }} />
@@ -221,6 +223,7 @@ export default function ChatWindow({
                 message={message}
                 isMine={isMine}
                 showAvatar={showAvatar}
+                onDelete={onDeleteMessage}
               />
             );
           })

@@ -11,6 +11,14 @@ import { authenticatedFetch } from '@/lib/authenticatedFetch';
 import { ensureTabAuthTokenFromCookie, getTabAuthToken } from '@/lib/tabAuth';
 import { io, Socket } from 'socket.io-client';
 
+interface ToastNotification {
+  id: string;
+  senderName: string;
+  message: string;
+  conversationId: string;
+  avatar?: string;
+}
+
 interface Participant {
   userId: {
     _id: string;
@@ -180,6 +188,34 @@ export default function MessagesClient() {
   const isStudent = user?.role === 'student';
   const navItems = isStudent ? studentNav : tutorNav;
 
+  const [toasts, setToasts] = useState<ToastNotification[]>([]);
+  const toastTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+    const timer = toastTimers.current.get(id);
+    if (timer) { clearTimeout(timer); toastTimers.current.delete(id); }
+  }, []);
+
+  const showToast = useCallback((toast: ToastNotification) => {
+    setToasts((prev) => {
+      if (prev.some((t) => t.id === toast.id)) return prev;
+      return [toast, ...prev].slice(0, 3);
+    });
+    const timer = setTimeout(() => dismissToast(toast.id), 5000);
+    toastTimers.current.set(toast.id, timer);
+  }, [dismissToast]);
+
+  const showToastRef = useRef(showToast);
+  useEffect(() => { showToastRef.current = showToast; }, [showToast]);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+  }, []);
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   /** Synchronous guard for which thread is open (avoids stale closure + race with fetch). */
@@ -290,6 +326,16 @@ export default function MessagesClient() {
     }
   };
 
+  // Delete message — soft delete, update UI immediately
+  const handleDeleteMessage = (messageId: string) => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg._id === messageId ? { ...msg, isDeleted: true } : msg
+      )
+    );
+    void fetchConversationsRef.current();
+  };
+
   // Create new conversation
   const handleCreateConversation = async (participantId: string, initialMessage: string) => {
     try {
@@ -372,8 +418,9 @@ export default function MessagesClient() {
 
     newSocket.on('new_message', (data: { conversationId: string; message: Message }) => {
       const incoming = normalizeMessage(data.message);
+      const isFromMe = incoming.senderId._id === user.userId;
 
-      if (incoming.senderId._id !== user.userId) {
+      if (!isFromMe) {
         newSocket.emit('message_delivered', {
           conversationId: data.conversationId,
           messageId: incoming._id,
@@ -382,9 +429,40 @@ export default function MessagesClient() {
 
       void fetchConversationsRef.current();
 
-      if (data.conversationId !== activeConversationIdRef.current) return;
+      const isActiveConversation = data.conversationId === activeConversationIdRef.current;
 
-      setMessages((prev) => mergeIncomingMessages(prev, incoming));
+      if (isActiveConversation) {
+        // Message is in the open chat — append it directly
+        setMessages((prev) => mergeIncomingMessages(prev, incoming));
+      } else if (!isFromMe) {
+        // Message is in a background conversation — show notification
+        const senderName = incoming.senderId.name || 'Someone';
+        const preview = incoming.content.body.length > 60
+          ? incoming.content.body.slice(0, 60) + '…'
+          : incoming.content.body;
+
+        // In-app toast
+        showToastRef.current({
+          id: incoming._id,
+          senderName,
+          message: preview,
+          conversationId: data.conversationId,
+          avatar: incoming.senderId.profilePicture,
+        });
+
+        // Browser notification (when tab is not focused)
+        if (
+          typeof window !== 'undefined' &&
+          'Notification' in window &&
+          Notification.permission === 'granted' &&
+          document.visibilityState === 'hidden'
+        ) {
+          new Notification(`New message from ${senderName}`, {
+            body: preview,
+            icon: '/favicon.ico',
+          });
+        }
+      }
     });
 
     newSocket.on(
@@ -465,6 +543,117 @@ export default function MessagesClient() {
 
   return (
     <DashboardShell user={user} navItems={navItems}>
+      {/* Toast Notifications */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          pointerEvents: 'none',
+        }}
+      >
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            style={{
+              pointerEvents: 'all',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              padding: '14px 16px',
+              borderRadius: '14px',
+              backgroundColor: 'var(--color-ink)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+              minWidth: '280px',
+              maxWidth: '340px',
+              animation: 'fade-up 0.3s ease both',
+              cursor: 'pointer',
+              border: '1px solid rgba(181,136,58,0.25)',
+            }}
+            onClick={() => {
+              const conv = conversations.find((c) => c._id === toast.conversationId);
+              if (conv) handleSelectConversation(conv);
+              dismissToast(toast.id);
+            }}
+          >
+            {/* Avatar */}
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--color-gold)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                fontSize: '13px',
+                fontWeight: 700,
+                color: 'var(--color-ink)',
+                fontFamily: 'var(--font-sans)',
+                overflow: 'hidden',
+              }}
+            >
+              {toast.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={toast.avatar} alt={toast.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                toast.senderName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+              )}
+            </div>
+
+            {/* Text */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{
+                margin: 0,
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--color-gold)',
+                fontFamily: 'var(--font-sans)',
+                letterSpacing: '0.02em',
+                marginBottom: '2px',
+              }}>
+                {toast.senderName}
+              </p>
+              <p style={{
+                margin: 0,
+                fontSize: '13px',
+                color: 'rgba(246,241,234,0.85)',
+                fontFamily: 'var(--font-sans)',
+                lineHeight: 1.4,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {toast.message}
+              </p>
+            </div>
+
+            {/* Dismiss */}
+            <button
+              onClick={(e) => { e.stopPropagation(); dismissToast(toast.id); }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'rgba(246,241,234,0.4)',
+                fontSize: '16px',
+                lineHeight: 1,
+                padding: '0',
+                flexShrink: 0,
+                marginTop: '1px',
+              }}
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
       <div className="flex h-[calc(100vh-140px)] gap-0 rounded-xl overflow-hidden border" style={{ borderColor: 'var(--color-border)' }}>
         {/* Conversation List - Sidebar */}
         <div className="w-full lg:w-80 xl:w-96 flex-shrink-0 border-r" style={{ borderColor: 'var(--color-border)' }}>
@@ -482,7 +671,6 @@ export default function MessagesClient() {
             onClose={() => setIsModalOpen(false)}
             onCreate={handleCreateConversation}
             currentUserRole={user.role}
-            currentUserId={user.userId}
           />
         </div>
 
@@ -494,6 +682,11 @@ export default function MessagesClient() {
               messages={messages}
               currentUserId={user.userId}
               onSendMessage={handleSendMessage}
+              onDeleteMessage={handleDeleteMessage}
+              onBack={() => {
+                activeConversationIdRef.current = null;
+                setActiveConversation(null);
+              }}
               isLoading={loading}
             />
           ) : (
@@ -529,6 +722,7 @@ export default function MessagesClient() {
                 messages={messages}
                 currentUserId={user.userId}
                 onSendMessage={handleSendMessage}
+                onDeleteMessage={handleDeleteMessage}
                 onBack={() => {
                   activeConversationIdRef.current = null;
                   setActiveConversation(null);

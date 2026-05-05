@@ -7,6 +7,7 @@ import User from '@/models/User';
 import Payment from '@/models/Payment';
 import { verifyToken } from '@/lib/auth';
 import { resolveAuthToken } from '@/lib/resolveAuthToken';
+import { createNotification } from '@/lib/notifications';
 
 const createSessionSchema = z.object({
   tutorId: z.string().min(1, 'Tutor ID is required'),
@@ -94,6 +95,15 @@ export async function createSession(request: Request) {
       paymentStatus: 'unpaid',
     });
 
+    // Notify tutor of new booking request
+    await createNotification({
+      userId: tutor._id.toString(),
+      type: 'booking_request',
+      title: 'New Booking Request',
+      body: `${user.name} wants to book a session for ${parsed.subject}.`,
+      link: '/dashboard/requests',
+    });
+
     return NextResponse.json({ message: 'Session booked successfully', session }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -141,6 +151,34 @@ export async function updateSessionStatus(
       session.completedAt = new Date();
     }
     await session.save();
+
+    // Notify student of status change
+    const studentId = session.student.toString();
+    if (status === 'accepted') {
+      await createNotification({
+        userId: studentId,
+        type: 'booking_accepted',
+        title: 'Booking Accepted!',
+        body: `Your session for ${session.subject} has been accepted by your tutor.`,
+        link: '/dashboard/sessions',
+      });
+    } else if (status === 'declined') {
+      await createNotification({
+        userId: studentId,
+        type: 'booking_declined',
+        title: 'Booking Declined',
+        body: `Your session for ${session.subject} was declined by the tutor.`,
+        link: '/dashboard/sessions',
+      });
+    } else if (status === 'completed') {
+      await createNotification({
+        userId: studentId,
+        type: 'session_complete',
+        title: 'Session Completed',
+        body: `Your session for ${session.subject} has been marked as complete. Leave a review!`,
+        link: '/dashboard/sessions',
+      });
+    }
 
     return NextResponse.json({ message: 'Session updated successfully', session }, { status: 200 });
   } catch (error) {
@@ -203,6 +241,19 @@ export async function cancelSession(
     session.cancellationReason = parsed.reason;
     session.cancelledAt = new Date();
     await session.save();
+
+    // Notify the other party of the cancellation
+    const notifyUserId = isTutor
+      ? session.student.toString()
+      : session.tutor.toString();
+    const cancellerLabel = isTutor ? 'your tutor' : 'the student';
+    await createNotification({
+      userId: notifyUserId,
+      type: 'booking_cancelled',
+      title: 'Session Cancelled',
+      body: `Your session for ${session.subject} was cancelled by ${cancellerLabel}.`,
+      link: '/dashboard/sessions',
+    });
 
     if (isTutor) {
       const tutor = await User.findById(userToken.userId);
