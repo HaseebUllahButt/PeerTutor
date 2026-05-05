@@ -120,7 +120,7 @@ export default function ChatWindow({
 
           {/* Avatar */}
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-medium"
             style={{
               backgroundColor: otherParticipant?.userId.profilePicture
                 ? 'transparent'
@@ -132,8 +132,8 @@ export default function ChatWindow({
               <Image
                 src={otherParticipant.userId.profilePicture}
                 alt={otherParticipant.userId.name}
-                width={40}
-                height={40}
+                width={36}
+                height={36}
                 className="w-full h-full rounded-full object-cover"
               />
             ) : (
@@ -186,7 +186,7 @@ export default function ChatWindow({
       {/* Messages Area */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4"
+        className="flex-1 overflow-y-auto p-5 space-y-[14px]"
         style={{ backgroundColor: 'var(--color-paper)' }}
       >
         {messages.length === 0 ? (

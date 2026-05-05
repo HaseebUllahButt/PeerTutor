@@ -88,29 +88,33 @@ export default function MessageBubble({
     >
       <div className={`flex gap-2 max-w-[75%] items-end ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
         {/* Avatar */}
-        {!isMine && showAvatar && (
+        {!isMine && (
           <div className="flex-shrink-0 mt-1">
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-              style={{
-                backgroundColor: message.senderId.profilePicture
-                  ? 'transparent'
-                  : 'var(--color-gold)',
-                color: 'var(--color-canvas)',
-              }}
-            >
-              {message.senderId.profilePicture ? (
-                <Image
-                  src={message.senderId.profilePicture}
-                  alt={message.senderId.name}
-                  width={32}
-                  height={32}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                getInitials(message.senderId.name)
-              )}
-            </div>
+            {showAvatar ? (
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium"
+                style={{
+                  backgroundColor: message.senderId.profilePicture
+                    ? 'transparent'
+                    : 'var(--color-gold)',
+                  color: 'var(--color-canvas)',
+                }}
+              >
+                {message.senderId.profilePicture ? (
+                  <Image
+                    src={message.senderId.profilePicture}
+                    alt={message.senderId.name}
+                    width={32}
+                    height={32}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  getInitials(message.senderId.name)
+                )}
+              </div>
+            ) : (
+              <div className="w-8 h-8" />
+            )}
           </div>
         )}
 
@@ -157,8 +161,8 @@ export default function MessageBubble({
                 : isMine
                 ? 'var(--color-gold)'
                 : 'var(--color-canvas)',
-              borderTopLeftRadius: !isMine ? '4px' : undefined,
-              borderTopRightRadius: isMine ? '4px' : undefined,
+              borderBottomLeftRadius: !isMine ? '4px' : undefined,
+              borderBottomRightRadius: isMine ? '4px' : undefined,
               border: isMine && !message.isDeleted ? 'none' : '1px solid var(--color-border)',
               opacity: message.isDeleted ? 0.6 : 1,
             }}

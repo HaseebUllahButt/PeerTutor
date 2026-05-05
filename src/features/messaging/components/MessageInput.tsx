@@ -98,7 +98,7 @@ export default function MessageInput({
 
       {/* Input Container */}
       <div
-        className="flex-1 flex items-end gap-2 rounded-2xl px-4 py-2"
+        className="flex-1 flex items-end gap-2 rounded-[22px] px-4 py-2"
         style={{
           backgroundColor: 'var(--color-paper)',
           border: '1px solid var(--color-border)',
@@ -151,14 +151,14 @@ export default function MessageInput({
       <button
         type="submit"
         disabled={!content.trim() || disabled}
-        className="p-3 rounded-full transition-all flex-shrink-0"
+        className="w-10 h-10 rounded-full transition-all flex-shrink-0 flex items-center justify-center"
         style={{
           backgroundColor: content.trim() && !disabled ? 'var(--color-gold)' : 'var(--color-border)',
           color: content.trim() && !disabled ? 'var(--color-canvas)' : 'var(--color-ink-50)',
           cursor: content.trim() && !disabled ? 'pointer' : 'not-allowed',
         }}
       >
-        <Send className="w-5 h-5" />
+        <Send className="w-4 h-4" />
       </button>
     </form>
   );
