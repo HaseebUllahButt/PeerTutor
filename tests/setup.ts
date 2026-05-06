@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 process.env.JWT_SECRET = 'test-secret-key-for-vitest-only';
-process.env.NODE_ENV = 'test';
+// process.env.NODE_ENV = 'test';
 
 // Module-level mutable cookie store driven by tests via setMockCookie helper.
 // Handlers using `cookies()` from next/headers will see whatever the test set.
