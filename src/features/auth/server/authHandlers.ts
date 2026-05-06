@@ -51,7 +51,7 @@ export async function registerUser(request: Request) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const zodErr = err as any;
       return NextResponse.json(
-        { message: zodErr.errors[0]?.message || 'Invalid input', errors: zodErr.errors },
+        { message: zodErr.issues?.[0]?.message || zodErr.errors?.[0]?.message || 'Invalid input', errors: zodErr.issues ?? zodErr.errors },
         { status: 400 }
       );
     }
@@ -109,7 +109,7 @@ export async function loginUser(request: Request) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const zodErr = err as any;
       return NextResponse.json(
-        { message: zodErr.errors[0]?.message || 'Invalid input' },
+        { message: zodErr.issues?.[0]?.message || zodErr.errors?.[0]?.message || 'Invalid input' },
         { status: 400 }
       );
     }

@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "cross-env NODE_ENV=production tsx socket-server.ts",
     "lint": "eslint",
-    "seed:payments": "tsx scripts/seed-payments.ts"
+    "seed:payments": "tsx scripts/seed-payments.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -33,8 +35,11 @@
     "cross-env": "^7.0.3",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
+    "mongodb-memory-server": "^11.1.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^2.1.9"
   }
 }
