@@ -140,7 +140,7 @@ export default function SessionsPageClient({ user }: { user: JWTPayload }) {
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSuccess = async (transactionId: string) => {
+  const handlePaymentSuccess = async (transactionId: string, paymentMethod: string) => {
     if (!selectedSession) return;
     
     try {
@@ -149,7 +149,7 @@ export default function SessionsPageClient({ user }: { user: JWTPayload }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           transactionId,
-          paymentMethod: 'jazzcash',
+          paymentMethod,
         }),
       });
       
@@ -362,20 +362,20 @@ export default function SessionsPageClient({ user }: { user: JWTPayload }) {
          />
        )}
        
-       {/* Payment Modal */}
        {selectedSession && (
-         <PaymentGatewayModal
-           isOpen={showPaymentModal}
-           onClose={() => { setShowPaymentModal(false); setSelectedSession(null); }}
-           onSuccess={handlePaymentSuccess}
-           amount={selectedSession.amount || Math.round((selectedSession.hourlyRate || 500) * (selectedSession.duration || 1.5))}
-           sessionDetails={{
-             subject: selectedSession.subject,
-             tutorName: selectedSession.tutor?.name || 'Tutor',
-             duration: selectedSession.duration || 1.5,
-           }}
-         />
-       )}
+          <PaymentGatewayModal
+            isOpen={showPaymentModal}
+            onClose={() => { setShowPaymentModal(false); setSelectedSession(null); }}
+            onSuccess={handlePaymentSuccess}
+            amount={selectedSession.amount || Math.round((selectedSession.hourlyRate || 500) * (selectedSession.duration || 1.5))}
+            sessionId={selectedSession._id}
+            sessionDetails={{
+              subject: selectedSession.subject,
+              tutorName: selectedSession.tutor?.name || 'Tutor',
+              duration: selectedSession.duration || 1.5,
+            }}
+          />
+        )}
     </>
   );
 }

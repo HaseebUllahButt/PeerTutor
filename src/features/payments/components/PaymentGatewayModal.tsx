@@ -6,8 +6,9 @@ import { X, Shield, Lock, Clock, CheckCircle2, AlertCircle, Smartphone, CreditCa
 interface PaymentGatewayModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (transactionId: string) => void;
+  onSuccess: (transactionId: string, paymentMethod: string) => void;
   amount: number;
+  sessionId: string;
   sessionDetails: {
     subject: string;
     tutorName: string;
@@ -23,6 +24,7 @@ export default function PaymentGatewayModal({
   onClose,
   onSuccess,
   amount,
+  sessionId,
   sessionDetails,
 }: PaymentGatewayModalProps) {
   const [step, setStep] = useState<PaymentStep>('method');
@@ -67,32 +69,92 @@ export default function PaymentGatewayModal({
     return `${prefix}${Date.now()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
   }, [selectedMethod]);
 
-  // Simulate processing
+  // Process payment using real/mock integration
   useEffect(() => {
     if (step === 'processing') {
-      const interval = setInterval(() => {
-        setProcessingProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            // 90% success rate simulation
-            if (Math.random() > 0.1) {
-              const txnId = generateTransactionId();
+      let isSubscribed = true;
+
+      const runPayment = async () => {
+        setProcessingProgress(15);
+        try {
+          if (selectedMethod === 'bank_transfer') {
+            // Direct mock bank transfer
+            setProcessingProgress(50);
+            const res = await fetch(`/api/sessions/${sessionId}/pay`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                paymentMethod: 'bank_transfer',
+                transactionId: bankTransferReference || `BT-${Date.now()}`,
+              }),
+            });
+
+            if (!res.ok) {
+              const errData = await res.json();
+              throw new Error(errData.message || 'Failed to record bank transfer request');
+            }
+
+            if (isSubscribed) {
+              setProcessingProgress(100);
+              const txnId = bankTransferReference || `BT-${Date.now()}`;
               setTransactionId(txnId);
               setStep('success');
-              setTimeout(() => onSuccess(txnId), 1500);
-            } else {
-              setErrorMessage('Transaction declined by payment provider. Please try again.');
-              setStep('error');
+              setTimeout(() => {
+                if (isSubscribed) onSuccess(txnId, 'bank_transfer');
+              }, 1500);
             }
-            return 100;
-          }
-          return prev + Math.random() * 15 + 5;
-        });
-      }, 300);
+          } else {
+            // Redirect-based integration (Stripe, FastPay/PayFast for JazzCash/Easypaisa)
+            setProcessingProgress(45);
+            const res = await fetch(`/api/sessions/${sessionId}/pay`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                initiate: true,
+                paymentMethod: selectedMethod,
+                mobileNumber,
+              }),
+            });
 
-      return () => clearInterval(interval);
+            const data = await res.json();
+            if (!res.ok) {
+              throw new Error(data.message || 'Payment integration initiation failed');
+            }
+
+            if (isSubscribed) {
+              setProcessingProgress(90);
+              // Redirect to payment gateway page (Stripe Checkout or FastPay/PayFast sandbox mock)
+              if (data.redirectUrl) {
+                setTimeout(() => {
+                  window.location.href = data.redirectUrl;
+                }, 1000);
+              } else {
+                // Fallback to direct completion if no redirectUrl
+                setProcessingProgress(100);
+                const txnId = data.transactionId || generateTransactionId();
+                setTransactionId(txnId);
+                setStep('success');
+                setTimeout(() => {
+                  if (isSubscribed) onSuccess(txnId, selectedMethod);
+                }, 1500);
+              }
+            }
+          }
+        } catch (err: any) {
+          if (isSubscribed) {
+            setErrorMessage(err.message || 'Payment gateway returned an error. Please try again.');
+            setStep('error');
+          }
+        }
+      };
+
+      runPayment();
+
+      return () => {
+        isSubscribed = false;
+      };
     }
-  }, [step, onSuccess, generateTransactionId]);
+  }, [step, sessionId, selectedMethod, mobileNumber, bankTransferReference, generateTransactionId, onSuccess]);
 
   const handleMethodSelect = (method: PaymentMethod) => {
     setSelectedMethod(method);
@@ -103,6 +165,7 @@ export default function PaymentGatewayModal({
     e.preventDefault();
     setStep('processing');
   };
+
 
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');

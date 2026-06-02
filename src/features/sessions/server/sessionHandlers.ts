@@ -8,6 +8,8 @@ import Payment from '@/models/Payment';
 import { verifyToken } from '@/lib/auth';
 import { resolveAuthToken } from '@/lib/resolveAuthToken';
 import { createNotification } from '@/lib/notifications';
+import { initiateFastPay, initiatePayFast, initiateStripe } from '@/lib/paymentService';
+
 
 const createSessionSchema = z.object({
   tutorId: z.string().min(1, 'Tutor ID is required'),
@@ -377,37 +379,115 @@ export async function payForSession(
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
     }
 
-    let body = {};
+    let body = {} as any;
     try {
       body = await request.json();
     } catch {
       // Empty body is OK
     }
-    const { transactionId, paymentMethod } = body as { transactionId?: string; paymentMethod?: string };
+    const { transactionId, paymentMethod, initiate, mobileNumber } = body;
 
     const amount = session.amount || Math.round((session.hourlyRate || 500) * (session.duration || 1.5));
+
+    // Redirection / checkout initiation path
+    if (initiate) {
+      const studentUser = await User.findById(user.userId);
+      const customerEmail = studentUser?.email || '';
+      
+      const host = request.headers.get('host') || 'localhost:3000';
+      const protocol = request.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
+      const redirectUrl = `${protocol}://${host}/dashboard/payments/callback`;
+
+      let initiationResult;
+
+      if (paymentMethod === 'stripe') {
+        initiationResult = await initiateStripe(session._id.toString(), amount, session.subject, redirectUrl);
+      } else if (paymentMethod === 'jazzcash' || paymentMethod === 'easypaisa') {
+        // Call FastPay or PayFast based on configuration
+        if (process.env.FASTPAY_MERCHANT_MOBILE || !process.env.PAYFAST_MERCHANT_ID) {
+          initiationResult = await initiateFastPay(
+            session._id.toString(),
+            amount,
+            mobileNumber || '',
+            redirectUrl
+          );
+        } else {
+          initiationResult = await initiatePayFast(
+            session._id.toString(),
+            amount,
+            customerEmail,
+            mobileNumber || '',
+            paymentMethod,
+            redirectUrl
+          );
+        }
+      } else {
+        // Bank transfer doesn't require redirection, just direct approval/verification
+        return NextResponse.json({
+          message: 'Bank transfer payment initiated. Please complete the transfer.',
+          transactionId: `BT-${Date.now()}`,
+        }, { status: 200 });
+      }
+
+      if (initiationResult.success) {
+        session.paymentStatus = 'pending';
+        session.paymentMethod = paymentMethod;
+        await session.save();
+
+        return NextResponse.json({
+          initiated: true,
+          redirectUrl: initiationResult.redirectUrl,
+          transactionId: initiationResult.transactionId,
+        }, { status: 200 });
+      } else {
+        return NextResponse.json({
+          message: initiationResult.message || 'Payment gateway initiation failed'
+        }, { status: 400 });
+      }
+    }
+
+    // Direct / callback payment finalization path
     const platformFee = Math.round(amount * 0.15);
     const tutorEarnings = amount - platformFee;
 
-    const payment = await Payment.create({
-      sessionId: session._id,
-      tutorId: session.tutor,
-      studentId: user.userId,
-      amount,
-      platformFee,
-      tutorEarnings,
-      status: 'completed',
-      paymentMethod: paymentMethod || 'jazzcash',
-      transactionId: transactionId || `TXN${Date.now()}`,
-      paidAt: new Date(),
-    });
+    // Check if payment document already exists for this session to prevent duplicate creation
+    let payment = await Payment.findOne({ sessionId: session._id });
+    if (!payment) {
+      payment = await Payment.create({
+        sessionId: session._id,
+        tutorId: session.tutor,
+        studentId: user.userId,
+        amount,
+        platformFee,
+        tutorEarnings,
+        status: 'completed',
+        paymentMethod: paymentMethod || 'jazzcash',
+        transactionId: transactionId || `TXN${Date.now()}`,
+        paidAt: new Date(),
+      });
+    } else {
+      payment.status = 'completed';
+      payment.paymentMethod = paymentMethod || 'jazzcash';
+      payment.transactionId = transactionId || payment.transactionId;
+      payment.paidAt = new Date();
+      await payment.save();
+    }
 
     session.paymentStatus = 'paid';
     session.paymentId = payment._id;
-    session.transactionId = transactionId;
+    session.transactionId = transactionId || payment.transactionId;
     session.paymentMethod = (paymentMethod as 'jazzcash' | 'easypaisa' | 'stripe' | 'bank_transfer') || 'jazzcash';
     session.paidAt = new Date();
     await session.save();
+
+    // Create notification for tutor
+    await createNotification({
+      userId: session.tutor.toString(),
+      type: 'payment_received',
+      title: 'Payment Received',
+      body: `You received Rs. ${amount.toLocaleString()} for your session on ${session.subject}. Please verify it.`,
+      link: '/dashboard/sessions',
+    });
 
     return NextResponse.json(
       {
@@ -561,3 +641,44 @@ export async function getSessionPaymentStatus(
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export async function getSessionDetails(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const token = await resolveAuthToken(request);
+
+    if (!token) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const user = verifyToken(token);
+    if (!user) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectToDatabase();
+
+    const session = await Session.findById(id)
+      .populate('student', 'name email profilePicture')
+      .populate('tutor', 'name email profilePicture')
+      .lean();
+
+    if (!session) {
+      return NextResponse.json({ message: 'Session not found' }, { status: 404 });
+    }
+
+    // Access check: only student or tutor of the session can access it
+    if (session.student._id.toString() !== user.userId && session.tutor._id.toString() !== user.userId) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
+    }
+
+    return NextResponse.json({ session }, { status: 200 });
+  } catch (error) {
+    console.error('Session Details Error:', error);
+    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+  }
+}
+

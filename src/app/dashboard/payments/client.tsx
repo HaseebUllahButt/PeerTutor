@@ -96,19 +96,18 @@ export default function PaymentsClient({ user }: { user: JWTPayload }) {
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSuccess = async (transactionId: string) => {
+  const handlePaymentSuccess = async (transactionId: string, paymentMethod: string) => {
     if (!selectedSession) return;
     
     setPaymentProcessing(true);
     
-    // Mock API call to update session payment status
     try {
       await fetch(`/api/sessions/${selectedSession._id}/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           transactionId,
-          paymentMethod: selectedSession.paymentMethod || 'jazzcash',
+          paymentMethod: paymentMethod || selectedSession.paymentMethod || 'jazzcash',
         }),
       });
       
@@ -122,6 +121,7 @@ export default function PaymentsClient({ user }: { user: JWTPayload }) {
       setSelectedSession(null);
     }
   };
+
 
   const handleViewInvoice = (session: PaymentSession) => {
     if (!session.amount || !session.tutor) return;
@@ -445,13 +445,13 @@ export default function PaymentsClient({ user }: { user: JWTPayload }) {
           </div>
         </div>
 
-        {/* Payment Modal */}
         {selectedSession && (
           <PaymentGatewayModal
             isOpen={showPaymentModal}
             onClose={() => setShowPaymentModal(false)}
             onSuccess={handlePaymentSuccess}
             amount={selectedSession.amount || Math.round((selectedSession.hourlyRate || 500) * (selectedSession.duration || 1.5))}
+            sessionId={selectedSession._id}
             sessionDetails={{
               subject: selectedSession.subject,
               tutorName: selectedSession.tutor?.name || 'Tutor',
