@@ -49,6 +49,7 @@ export async function initiateFastPay(
   }
 
   try {
+    const successRedirect = `${redirectUrl}?sessionId=${orderId}&status=success&method=jazzcash`;
     const response = await fetch(`${FASTPAY_BASE_URL}/api/v1/public/initiate-payment`, {
       method: 'POST',
       headers: {
@@ -60,7 +61,7 @@ export async function initiateFastPay(
         amount: amount.toString(),
         order_id: orderId,
         bill_number: `BILL-${orderId}-${Date.now().toString().slice(-4)}`,
-        refund_address: redirectUrl,
+        refund_address: successRedirect,
       }),
     });
 
@@ -89,7 +90,7 @@ export async function initiateFastPay(
 }
 
 /**
- * Initiates a payment with PayFast Pakistan (for JazzCash/EasyPaisa/Cards)
+ * Initiates a PayFast Pakistan (for JazzCash/EasyPaisa/Cards)
  */
 export async function initiatePayFast(
   orderId: string,
@@ -110,6 +111,7 @@ export async function initiatePayFast(
   }
 
   try {
+    const successRedirect = `${redirectUrl}?sessionId=${orderId}&status=success&method=${paymentMethod}`;
     // Generate secure signature or call the initiation endpoint
     // Normally PayFast requires a payload containing order details and merchant ID
     const response = await fetch(`${PAYFAST_BASE_URL}/ipg/v1/initiate`, {
@@ -125,7 +127,7 @@ export async function initiatePayFast(
         email_address: customerEmail || 'customer@peertutor.pk',
         mobile_number: customerMobile || '03001234567',
         payment_method: paymentMethod, // e.g. jazzcash, easypaisa
-        return_url: redirectUrl,
+        return_url: successRedirect,
       }),
     });
 
@@ -174,8 +176,8 @@ export async function initiateStripe(
 
   try {
     const params = new URLSearchParams({
-      'success_url': `${redirectUrl}?session_id={CHECKOUT_SESSION_ID}&success=true`,
-      'cancel_url': `${redirectUrl}?success=false`,
+      'success_url': `${redirectUrl}?sessionId=${orderId}&status=success&txnId={CHECKOUT_SESSION_ID}&method=stripe`,
+      'cancel_url': `${redirectUrl}?sessionId=${orderId}&status=cancelled&method=stripe`,
       'line_items[0][price_data][currency]': 'pkr',
       'line_items[0][price_data][product_data][name]': `Tutoring Session: ${subject}`,
       'line_items[0][price_data][unit_amount]': Math.round(amount * 100).toString(), // Stripe expects cents/paise

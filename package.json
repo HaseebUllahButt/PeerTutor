@@ -2,6 +2,27 @@
   "name": "peer-tutor",
   "version": "0.1.0",
   "private": true,
+  "description": "Peer-to-peer tutoring marketplace for university students — book tutors, pay securely, and run sessions with real-time chat.",
+  "author": "Haseeb Ullah Butt",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HaseebUllahButt/PeerTutor.git"
+  },
+  "keywords": [
+    "tutoring",
+    "education",
+    "nextjs",
+    "typescript",
+    "socket.io",
+    "stripe",
+    "mongodb",
+    "peer-to-peer"
+  ],
+  "homepage": "https://github.com/HaseebUllahButt/PeerTutor#readme",
+  "bugs": {
+    "url": "https://github.com/HaseebUllahButt/PeerTutor/issues"
+  },
   "scripts": {
     "dev": "tsx socket-server.ts",
     "build": "next build",
